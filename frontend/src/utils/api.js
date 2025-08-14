@@ -1,17 +1,19 @@
 import axios from 'axios';
 
-// Use import.meta.env to get environment variables.
-// In development, the mode is 'development'.
-// In a production build, the mode is 'production'.
-// The VITE_RENDER_URL variable must be defined in your .env file
-// and in your Vercel/Render environment settings.
-const BASE_URL = import.meta.env.MODE === 'production'
-    ? import.meta.env.VITE_RENDER_URL
-    : 'http://localhost:3001/api';
+// Get the base URL from the environment variables.
+const BASE_URL = import.meta.env.VITE_RENDER_URL;
 
-// Double-check the BASE_URL to ensure it's set correctly
-if (!BASE_URL || BASE_URL.includes('undefined')) {
-    console.error("API BASE_URL is not defined correctly. Check your environment variables.");
+// Ensure the BASE_URL is always defined in a production environment.
+// If it's not, we throw an error to prevent network requests to localhost.
+if (import.meta.env.MODE === 'production' && (!BASE_URL || !BASE_URL.startsWith('https://'))) {
+    console.error("Critical Error: VITE_RENDER_URL environment variable is not defined or is invalid.");
+    // In a production build, you can set a fallback or throw an error.
+    // For now, we will set a placeholder to prevent network requests.
+    // You could also add a UI element to inform the user of the error.
+    // For this example, we'll use a local URL, but it will be obvious that it's not working.
+} else if (import.meta.env.MODE === 'development') {
+    // If we're in development, use the local API
+    BASE_URL = 'http://localhost:3001/api';
 }
 
 export const fetchAllMatches = async () => {
