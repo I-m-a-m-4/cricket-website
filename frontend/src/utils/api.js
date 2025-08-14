@@ -1,17 +1,16 @@
 import axios from 'axios';
 
 // Get the base URL from the environment variables.
-const BASE_URL = import.meta.env.VITE_RENDER_URL;
+let BASE_URL;
 
-// Ensure the BASE_URL is always defined in a production environment.
-// If it's not, we throw an error to prevent network requests to localhost.
-if (import.meta.env.MODE === 'production' && (!BASE_URL || !BASE_URL.startsWith('https://'))) {
-    console.error("Critical Error: VITE_RENDER_URL environment variable is not defined or is invalid.");
-    // In a production build, you can set a fallback or throw an error.
-    // For now, we will set a placeholder to prevent network requests.
-    // You could also add a UI element to inform the user of the error.
-    // For this example, we'll use a local URL, but it will be obvious that it's not working.
-} else if (import.meta.env.MODE === 'development') {
+// Correctly set the BASE_URL based on the environment.
+// This is the most reliable way to handle environment variables with Vite.
+if (import.meta.env.MODE === 'production') {
+    BASE_URL = import.meta.env.VITE_RENDER_URL;
+    if (!BASE_URL || !BASE_URL.startsWith('https://')) {
+        console.error("Critical Error: VITE_RENDER_URL environment variable is not defined or is invalid in production.");
+    }
+} else {
     // If we're in development, use the local API
     BASE_URL = 'http://localhost:3001/api';
 }
