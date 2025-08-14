@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-// API configuration and functions
 const BASE_URL = 'http://localhost:3001/api';
 
 /**
@@ -11,8 +10,6 @@ const BASE_URL = 'http://localhost:3001/api';
 export const fetchTopPlayers = async () => {
     try {
         const response = await axios.get(`${BASE_URL}/players/top`);
-        // The API returns the data in a nested 'data' property.
-        // We assume the local server endpoint has already processed this.
         return response.data;
     } catch (error) {
         console.error("Error fetching top players:", error);
@@ -21,20 +18,11 @@ export const fetchTopPlayers = async () => {
 };
 
 const TrendingPlayers = () => {
-    // State to manage the list of all players fetched from the API
     const [allPlayers, setAllPlayers] = useState([]);
-    // State to manage the currently selected filter category
-    const [activeFilter, setActiveFilter] = useState('All');
-    // State to hold the unique filter categories (countries) derived from the player data
-    const [filters, setFilters] = useState([]);
-    // State to manage loading status
     const [loading, setLoading] = useState(true);
-    // State to manage the current page of the carousel
     const [carouselPage, setCarouselPage] = useState(0);
-    // Number of players to show per page in the carousel
     const playersPerPage = 6;
 
-    // A simple mapping of country names to flag emojis
     const countryToFlag = {
         'India': '🇮🇳',
         'Afghanistan': '🇦🇫',
@@ -49,46 +37,30 @@ const TrendingPlayers = () => {
         'New Zealand': '🇳🇿',
         'Zimbabwe': '🇿🇼'
     };
-    
-    // Effect hook to fetch players from the API when the component mounts
+
     useEffect(() => {
         const getPlayers = async () => {
-            try {
-                setLoading(true);
-                const playersData = await fetchTopPlayers();
-                
-                if (playersData && playersData.length > 0) {
-                    setAllPlayers(playersData);
-                    
-                    // Extract unique countries from the fetched player data and add an 'All' filter
-                    const uniqueCountries = [...new Set(playersData.map(player => player.country?.name).filter(Boolean))].sort();
-                    setFilters(['All', ...uniqueCountries]);
-                }
-            } catch (error) {
-                console.error("Failed to fetch players:", error);
-            } finally {
-                setLoading(false);
+            setLoading(true);
+            const startTime = performance.now();
+            const playersData = await fetchTopPlayers();
+            const endTime = performance.now();
+            console.log(`API call took ${Math.round(endTime - startTime)}ms`);
+
+            if (playersData && playersData.length > 0) {
+                setAllPlayers(playersData);
             }
+            setLoading(false);
         };
 
         getPlayers();
     }, []);
 
-    // Derived state for players to display based on the active filter
-    const filteredPlayers = activeFilter === 'All'
-        ? allPlayers
-        : allPlayers.filter(player => player.country?.name === activeFilter);
-        
-    // Calculate the total number of pages for the carousel
-    const totalPages = Math.ceil(filteredPlayers.length / playersPerPage);
-
-    // Get the players for the current carousel page
-    const displayedPlayers = filteredPlayers.slice(
+    const displayedPlayers = allPlayers.slice(
         carouselPage * playersPerPage,
         carouselPage * playersPerPage + playersPerPage
     );
 
-    // Handle carousel navigation
+    const totalPages = Math.ceil(allPlayers.length / playersPerPage);
     const handleNext = () => {
         setCarouselPage((prevPage) => (prevPage + 1) % totalPages);
     };
@@ -97,55 +69,78 @@ const TrendingPlayers = () => {
         setCarouselPage((prevPage) => (prevPage - 1 + totalPages) % totalPages);
     };
 
-    // Simple loading state
     if (loading) {
         return (
-            <section className="max-w-7xl mx-auto px-4 py-12 flex items-center justify-center min-h-[500px]">
-                <div className="flex items-center justify-center">
-                    <div className="relative w-20 h-20">
-                        <div className="absolute w-full h-full rounded-full border-4 border-[#DD242D] border-t-transparent animate-spin"></div>
-                        <div className="absolute top-1/2 left-1/2 w-10 h-10 -mt-5 -ml-5 rounded-full border-4 border-[#FF4535] border-l-transparent animate-spin-reverse"></div>
-                    </div>
+            <section className="max-w-7xl mx-auto px-4 py-12">
+                <h2 className="text-center text-4xl font-bold mb-10 text-gray-800">Trending Players</h2>
+                <div className="flex justify-center flex-wrap gap-6">
+                    {[...Array(5)].map((_, index) => (
+                        <div key={index} className="w-full max-w-[200px] text-center p-4 bg-gray-100 rounded-xl shadow-md animate-pulse border border-gray-200">
+                            <div className="overflow-hidden rounded-full w-32 h-32 mx-auto mb-4 bg-gray-300"></div>
+                            <div className="h-6 bg-gray-300 rounded w-3/4 mx-auto mb-2"></div>
+                            <div className="h-4 bg-gray-300 rounded w-1/2 mx-auto"></div>
+                        </div>
+                    ))}
                 </div>
-                <style>{`
-                    @keyframes spin-reverse {
-                        0% { transform: rotate(0deg); }
-                        100% { transform: rotate(-360deg); }
-                    }
-                `}</style>
+                <div className="flex justify-center mt-8 space-x-2">
+                    {[...Array(3)].map((_, index) => (
+                        <div key={index} className="w-3 h-3 bg-gray-300 rounded-full animate-pulse"></div>
+                    ))}
+                </div>
             </section>
         );
     }
-    
+
     return (
         <section className="bg-white py-12 font-sans">
             <div className="container mx-auto px-4">
                 <h2 className="text-center text-4xl font-bold mb-10 text-gray-800">Trending Players</h2>
-                <div className="flex justify-center flex-wrap gap-2 mb-10">
-                    {filters.map((filterName) => (
-                        <button
-                            key={filterName}
-                            onClick={() => {
-                                setActiveFilter(filterName);
-                                setCarouselPage(0); // Reset carousel on filter change
-                            }}
-                            className={`flex items-center space-x-2 py-2 px-4 rounded-full font-semibold transition-colors duration-300 ${
-                                activeFilter === filterName
-                                    ? 'bg-red-600 text-white shadow-lg'
-                                    : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
-                            }`}
-                        >
-                            {countryToFlag[filterName] && <span className="text-lg">{countryToFlag[filterName]}</span>}
-                            <span>{filterName}</span>
-                        </button>
+
+                {/* Desktop layout (6 columns) - only visible on lg and above (≥1024px) */}
+                <div className="hidden lg:grid lg:grid-cols-6 gap-6 justify-items-center">
+                    {displayedPlayers.map((player) => (
+                        <div key={player.id} className="w-full max-w-[200px] text-center p-4 bg-gray-50 rounded-xl shadow-md border border-gray-100 transform hover:scale-105 transition-transform duration-300">
+                            <div className="overflow-hidden rounded-full w-32 h-32 mx-auto mb-4 border-4 border-white shadow-lg">
+                                <img
+                                    src={player.image_path || `https://placehold.co/200x200/e5e7eb/6b7280?text=${player.fullname}`}
+                                    alt={player.fullname}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => e.target.src = `https://placehold.co/200x200/e5e7eb/6b7280?text=${player.fullname}`}
+                                />
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-800">{player.fullname}</h3>
+                            <p className="text-sm text-gray-500">{player.position?.name}</p>
+                        </div>
                     ))}
                 </div>
-                
-                <div className="relative">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 justify-items-center transition-transform duration-500 ease-in-out">
-                        {displayedPlayers.length > 0 ? (
-                            displayedPlayers.map((player) => (
-                                <div key={player.id} className="w-full max-w-[200px] text-center p-4 bg-gray-50 rounded-xl shadow-md border border-gray-100 transform hover:scale-105 transition-transform duration-300">
+
+                {/* Medium layout (2 rows of 3 columns) - visible only on md (768px–1023px) */}
+                <div className="hidden md:grid md:grid-cols-3 md:gap-6 lg:hidden">
+                    {displayedPlayers.map((player) => (
+                        <div key={player.id} className="w-full max-w-[200px] text-center p-4 bg-gray-50 rounded-xl shadow-md border border-gray-100 transform hover:scale-105 transition-transform duration-300">
+                            <div className="overflow-hidden rounded-full w-32 h-32 mx-auto mb-4 border-4 border-white shadow-lg">
+                                <img
+                                    src={player.image_path || `https://placehold.co/200x200/e5e7eb/6b7280?text=${player.fullname}`}
+                                    alt={player.fullname}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => e.target.src = `https://placehold.co/200x200/e5e7eb/6b7280?text=${player.fullname}`}
+                                />
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-800">{player.fullname}</h3>
+                            <p className="text-sm text-gray-500">{player.position?.name}</p>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Mobile carousel layout - visible only on screens < md (<768px) */}
+                <div className="md:hidden relative">
+                    <div className="overflow-hidden">
+                        <div
+                            className="flex transition-transform duration-500 ease-in-out"
+                            style={{ transform: `translateX(-${carouselPage * 100}%)` }}
+                        >
+                            {allPlayers.map((player) => (
+                                <div key={player.id} className="w-full flex-shrink-0 text-center p-4 bg-gray-50 rounded-xl shadow-md border border-gray-100">
                                     <div className="overflow-hidden rounded-full w-32 h-32 mx-auto mb-4 border-4 border-white shadow-lg">
                                         <img
                                             src={player.image_path || `https://placehold.co/200x200/e5e7eb/6b7280?text=${player.fullname}`}
@@ -157,26 +152,40 @@ const TrendingPlayers = () => {
                                     <h3 className="text-lg font-bold text-gray-800">{player.fullname}</h3>
                                     <p className="text-sm text-gray-500">{player.position?.name}</p>
                                 </div>
-                            ))
-                        ) : (
-                            <div className="col-span-full text-center text-gray-500">No players found for this selection.</div>
-                        )}
+                            ))}
+                        </div>
                     </div>
+                    {/* Navigation dots for mobile */}
+                    {allPlayers.length > 0 && (
+                        <div className="flex justify-center mt-4 space-x-2">
+                            {Array.from({ length: totalPages }).map((_, index) => (
+                                <div
+                                    key={index}
+                                    onClick={() => setCarouselPage(index)}
+                                    className={`h-2 w-2 rounded-full cursor-pointer transition-all duration-300 ${
+                                        index === carouselPage ? 'bg-red-600 w-5' : 'bg-gray-400'
+                                    }`}
+                                />
+                            ))}
+                        </div>
+                    )}
                 </div>
-                
-                {/* Carousel navigation dots */}
-                {totalPages > 1 && (
-                    <div className="flex justify-center mt-8 space-x-2">
-                        {Array.from({ length: totalPages }).map((_, index) => (
-                            <button
-                                key={index}
-                                onClick={() => setCarouselPage(index)}
-                                className={`w-3 h-3 rounded-full transition-colors duration-300 ${
-                                    carouselPage === index ? 'bg-red-600' : 'bg-gray-300 hover:bg-gray-400'
-                                }`}
-                                aria-label={`Go to page ${index + 1}`}
-                            />
-                        ))}
+
+                {/* Carousel navigation arrows (optional for mobile) */}
+                {allPlayers.length > playersPerPage && (
+                    <div className="md:hidden flex justify-between mt-4 px-4">
+                        <button
+                            onClick={handlePrev}
+                            className="text-red-600 font-bold text-2xl"
+                        >
+                            ←
+                        </button>
+                        <button
+                            onClick={handleNext}
+                            className="text-red-600 font-bold text-2xl"
+                        >
+                            →
+                        </button>
                     </div>
                 )}
             </div>

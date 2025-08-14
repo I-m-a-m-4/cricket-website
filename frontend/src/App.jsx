@@ -14,6 +14,12 @@ import VideosSection from "./components/VideoSection.jsx";
 import TrendingPlayers from "./components/TrendingPlayers.jsx";
 import RankingsSection from "./components/RankingSection.jsx";
 
+// Placeholder components for missing pages
+const CricketPage = () => <div>Cricket Page Content</div>;
+const RankingPage = () => <div>Ranking Page Content</div>;
+const LiveMatchPage = () => <div>Live Match Page Content</div>;
+const ContactPage = () => <div>Contact Page Content</div>;
+
 function App() {
   return (
     <BrowserRouter>
@@ -23,14 +29,17 @@ function App() {
         <Route path="/match/:id" element={<MatchPage />} />
         <Route path="/standings" element={<StandingsPage />} />
         <Route path="/team/:id" element={<TeamPage />} />
-        {/* Add a route for the News/Blog page here */}
+        <Route path="/cricket" element={<CricketPage />} />
+        <Route path="/ranking" element={<RankingPage />} />
+        <Route path="/live-match" element={<LiveMatchPage />} />
+        <Route path="/contact" element={<ContactPage />} />
       </Routes>
       <MustWatchSection />
       <MatchesSection />
       <RankingsSection />
       <TrendingPlayers />
-      <VideosSection className="bg-gray-100" />
-    <KeySeriesSection />
+      <VideosSection />
+      <KeySeriesSection />
       <LatestNewsSection />
       <InDepthSection />
       <Footer />

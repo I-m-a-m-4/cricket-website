@@ -1,118 +1,162 @@
 import React, { useState, useEffect } from 'react';
-import { fetchTopPlayers } from '../utils/api';
+import { fetchTeamRankings } from '../utils/api';
 
 function RankingsSection() {
-  const [players, setPlayers] = useState([]);
+  const [rankings, setRankings] = useState([]);
   const [activeCategory, setActiveCategory] = useState('Test');
-  const [activeType, setActiveType] = useState('Player Ranking');
+  const [activeType, setActiveType] = useState('Team Ranking');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const loadPlayers = async () => {
+    const loadRankings = async () => {
       setLoading(true);
       setError(null);
       try {
-        const data = await fetchTopPlayers();
-        // Map and limit to top 5 players, using order as rank
-        const mappedPlayers = data.slice(0, 5).map((player, index) => ({
-          id: player.id,
-          name: player.fullname || 'Unknown Player',
-          country: player.country?.name || 'Unknown',
-          image: player.image_path || 'https://via.placeholder.com/100',
-          // No points available; using order as rank
-        }));
-        setPlayers(mappedPlayers);
+        if (activeType === 'Team Ranking') {
+          const rankingsData = await fetchTeamRankings(activeCategory, 'men');
+          setRankings(rankingsData); // Contains the top 5 teams directly
+        } else {
+          setRankings([]); // Reset rankings for Player Ranking
+        }
       } catch (err) {
-        console.error('Error fetching players:', err);
+        console.error('Error fetching rankings:', err);
         setError('Failed to load rankings. Please try again later.');
       } finally {
         setLoading(false);
       }
     };
-    loadPlayers();
-  }, [activeCategory, activeType]); // Re-fetch if filters change (though data might not change)
+
+    loadRankings();
+  }, [activeCategory, activeType]);
 
   const categories = ['Test', 'ODI', 'T20I'];
-  const types = ['Player Ranking', 'Team Ranking'];
+  const types = ['Team Ranking', 'Player Ranking']; // Player Ranking last
 
-  if (loading) return <div className="text-center py-4">Loading...</div>;
-  if (error) return <div className="text-center py-4 text-red-500">{error}</div>;
+  if (error) return <div className="text-center py-12 text-red-500">{error}</div>;
 
   return (
     <section className="bg-gray-100 py-12">
       <div className="max-w-7xl mx-auto px-4">
         <div className="text-center mb-6">
           <h2 className="text-3xl font-bold text-gray-800 mb-2">Cricket Ranking</h2>
-          <p className="text-gray-600 text-sm">
-            Lorem ipsum dolor sit amet consectetur. Nibh id venenatis elit quam posuere vitae aliquam. Velit odio mi
-            duis proin quam eget. Sit vitae sit commodo id sagittis quam lacinia tortor augue. Pellentesque et tellus.
+          <p className="text-gray-600 text-sm max-w-2xl mx-auto">
+            Official ICC team rankings across all formats of international cricket.
+            Rankings are updated regularly based on team performance.
           </p>
         </div>
-        <div className="flex justify-center space-x-4 mb-6 flex-wrap">
-          <button
-            onClick={() => setActiveType('Player Ranking')}
-            className={`px-4 py-2 rounded-lg font-semibold transition-colors duration-300 ${
-              activeType === 'Player Ranking' ? 'bg-red-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'
-            }`}
-          >
-            Player Ranking
-          </button>
-          <button
-            onClick={() => setActiveType('Team Ranking')}
-            className={`px-4 py-2 rounded-lg font-semibold transition-colors duration-300 ${
-              activeType === 'Team Ranking' ? 'bg-red-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'
-            }`}
-          >
-            Team Ranking
-          </button>
-          {categories.map(category => (
-            <button
-              key={category}
-              onClick={() => setActiveCategory(category)}
-              className={`px-4 py-2 rounded-lg font-semibold transition-colors duration-300 ${
-                activeCategory === category ? 'bg-red-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              {category}
-            </button>
-          ))}
+
+        <div className="flex flex-col md:flex-row justify-center items-center space-y-4 md:space-y-0 md:space-x-4 mb-6">
+          {/* Type filters in one row (2 columns) on mobile, horizontal on md */}
+          <div className="grid grid-cols-2 gap-2 md:flex md:space-x-2">
+            {types.map(type => (
+              <button
+                key={type}
+                onClick={() => setActiveType(type)}
+                className={`px-4 py-2 rounded-lg font-semibold transition-colors duration-300 text-center ${
+                  activeType === type 
+                    ? 'bg-red-500 text-white shadow-md' 
+                    : 'bg-white text-gray-700 hover:bg-gray-100 hover:shadow-sm'
+                }`}
+              >
+                {type}
+              </button>
+            ))}
+          </div>
+
+          {/* Category filters in one row (3 columns) on mobile, horizontal on md */}
+          <div className="grid grid-cols-3 gap-2 md:flex md:space-x-2">
+            {categories.map(category => (
+              <button
+                key={category}
+                onClick={() => setActiveCategory(category)}
+                className={`px-4 py-2 rounded-lg font-semibold transition-colors duration-300 text-center ${
+                  activeCategory === category 
+                    ? 'bg-red-500 text-white shadow-md' 
+                    : 'bg-white text-gray-700 hover:bg-gray-100 hover:shadow-sm'
+                }`}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {['Batting', 'Bowling', 'All Rounder'].map(type => (
-            <div key={type} className="bg-white rounded-lg shadow-md p-4">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-red-500 font-semibold">{activeCategory} {type}</span>
-                {players[0] && (
-                  <img
-                    src={players[0].image}
-                    alt={players[0].name}
-                    className="w-16 h-16 object-cover rounded-full"
-                  />
-                )}
-              </div>
-              <div className="space-y-2">
-                {players.map((player, index) => (
-                  <div key={player.id} className="flex items-center justify-between text-sm">
-                    <div className="flex items-center space-x-2">
-                      <span className={`w-5 h-5 rounded-full ${
-                        index === 0 ? 'bg-gray-300' : index === 1 ? 'bg-green-500' : index === 2 ? 'bg-blue-500' : index === 3 ? 'bg-red-500' : 'bg-black'
-                      }`}></span>
-                      <img
-                        src={`https://flagcdn.com/w20/${player.country.toLowerCase().split(' ').join('-')}.png`}
-                        alt={player.country}
-                        className="w-5 h-5"
-                        onError={(e) => { e.target.src = 'https://via.placeholder.com/20'; }}
-                      />
-                      <span>{player.name}</span>
+
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[...Array(5)].map((_, index) => (
+              <div
+                key={index}
+                className="bg-white rounded-lg shadow-md p-4 border border-gray-200 animate-pulse"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <span className="h-6 bg-gray-300 rounded w-1/3"></span>
+                  <div className="w-16 h-16 bg-gray-300 rounded-full"></div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
+                    <div className="flex items-center space-x-3">
+                      <span className="w-6 h-6 bg-gray-300 rounded-full"></span>
+                      <span className="h-6 bg-gray-300 rounded w-1/2"></span>
                     </div>
-                    <span>{index + 1}</span> {/* Using position as rank since points are not available */}
+                    <span className="h-6 bg-gray-300 rounded w-1/4"></span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : activeType === 'Team Ranking' ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {rankings.map((team, index) => (
+              <div
+                key={team.id}
+                className="bg-white rounded-lg shadow-md p-4 border border-gray-200 transform hover:scale-105 transition-transform duration-300"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-red-500 font-semibold">
+                    {index === 0 ? `${activeCategory} Team Ranking` : ''}
+                  </span>
+                  <img
+                    src={team.image_path}
+                    alt={team.name}
+                    className="w-16 h-16 object-contain"
+                    onError={(e) => {
+                      e.target.src = 'https://via.placeholder.com/64?text=FLAG';
+                    }}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
+                    <div className="flex items-center space-x-3">
+                      <span className="w-6 h-6 flex items-center justify-center bg-gray-200 rounded-full text-xs font-medium">
+                        {index + 1}
+                      </span>
+                      <span className="font-medium text-gray-800">{team.name}</span>
+                    </div>
+                    <span className="font-bold text-gray-700">
+                      {team.rating || 'N/A'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <div className="inline-block">
+              <div className="animate-pulse flex space-x-4">
+                {[...Array(3)].map((_, index) => (
+                  <div key={index} className="w-48 h-64 bg-gray-200 rounded-lg p-4">
+                    <div className="w-16 h-16 bg-gray-300 rounded-full mb-2"></div>
+                    <div className="h-4 bg-gray-300 rounded w-3/4 mb-1"></div>
+                    <div className="h-3 bg-gray-300 rounded w-1/2"></div>
                   </div>
                 ))}
               </div>
+              <p className="mt-4 text-gray-600">Player rankings are coming soon. Check back later!</p>
             </div>
-          ))}
-        </div>
+          </div>
+        )}
       </div>
     </section>
   );

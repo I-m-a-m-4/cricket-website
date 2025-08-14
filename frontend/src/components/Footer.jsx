@@ -14,7 +14,7 @@ function Footer() {
         </div>
         
         {/* Navigation bar - boxed on mobile, full-width on desktop */}
-        <div className="w-full bg-[#122537] border-r-4 py-3 mb-4 sm:px-0">
+        <div className="w-full bg-[#122537] rounded-lg py-3 mb-4 sm:px-0">
           <div className="mx-auto sm:max-w-6xl">
             <div className="bg-[#122537] rounded-lg sm:rounded-none px-4 py-3 sm:p-0">
               <div className="flex flex-col sm:flex-row flex-wrap justify-start sm:justify-center items-start sm:items-center gap-y-3 gap-x-8 text-[15px]">

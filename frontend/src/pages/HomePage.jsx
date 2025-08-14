@@ -1,28 +1,97 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { fetchAllMatches, fetchAusIndMatches, fetchLegendsLeagueMatches, fetchLiveMatches, fetchUpcomingMatches } from '../utils/api';
+import React, { useState, useEffect, useRef, Fragment } from 'react';
+import {
+  fetchAllMatches,
+  fetchAusIndMatches,
+  fetchLegendsLeagueMatches,
+  fetchLiveMatches,
+  fetchUpcomingMatches
+} from '../utils/api';
 import MatchCard from '../components/MatchCard';
-import { BallTriangle } from 'react-loader-spinner';
-import { Fragment } from 'react';
+import MatchCardSkeleton from '../components/MatchCardSkeleton';
 import { Menu, Transition } from '@headlessui/react';
 import { ChevronDownIcon } from '@heroicons/react/20/solid';
 
 const filters = [
+  { id: 'all-matches', label: 'All Matches' },
   { id: 'live', label: 'Live Matches' },
   { id: 'upcoming', label: 'Upcoming Matches' },
   { id: 'finished', label: 'Finished Matches' },
-  { id: 'all-matches', label: 'All Matches' },
-  { id: 'aus-ind', label: 'AUS vs IND' },
-  { id: 'legends-league', label: 'Legends League' },
-  { id: 'can-t20', label: 'CAN T20' },
-  { id: 'hazare', label: 'Hazare Trophy' },
 ];
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(' ');
 }
 
+// Skeleton component for the entire HomePage
+function HomePageSkeleton() {
+  return (
+    <div className="min-h-[50%] relative overflow-hidden">
+      {/* Background Image with Dark Overlay */}
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: "url('/hero-bg.png')" }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-800/90 via-slate-900/90 to-blue-900/90"></div>
+      </div>
+
+      {/* Content */}
+      <div className="relative z-10">
+        <div className="container mx-auto px-6 py-8">
+          {/* Filter Buttons (Desktop) */}
+          <div className="hidden md:flex flex-wrap items-center gap-3 mb-8">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div 
+                key={index}
+                className="px-4 py-2 rounded-md text-sm font-medium bg-gray-700/50 w-32 h-10 animate-pulse"
+              ></div>
+            ))}
+          </div>
+
+          {/* Filter Dropdown (Mobile) */}
+          <div className="md:hidden flex justify-center mb-8">
+            <div className="w-full max-w-md">
+              <div className="inline-flex w-full justify-between items-center rounded-md bg-gray-700/50 px-4 py-2.5 text-sm font-medium text-white animate-pulse">
+                <div className="w-2/3 h-5 rounded bg-gray-600/50"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Match Cards Container Skeleton */}
+          <div className="space-y-6">
+            <div className="relative">
+              {/* Hidden scrollbar but maintain scroll functionality when real content loads */}
+              <div className="overflow-x-hidden pb-4">
+                <div className="flex gap-6">
+                  {Array.from({ length: 6 }).map((_, index) => (
+                    <div key={index} className="flex-shrink-0 w-full md:w-1/3">
+                      <MatchCardSkeleton />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Pagination Dots Skeleton */}
+              <div className="flex justify-center gap-2 mt-8">
+                {Array.from({ length: 3 }).map((_, index) => (
+                  <div
+                    key={index}
+                    className={`w-2 h-2 rounded-full ${
+                      index === 0 ? 'bg-red-500' : 'bg-gray-400'
+                    }`}
+                  ></div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function HomePage() {
-  const [activeFilter, setActiveFilter] = useState('live');
+  // Default to "All Matches"
+  const [activeFilter, setActiveFilter] = useState('all-matches');
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -43,6 +112,8 @@ function HomePage() {
             fetchedMatches = await fetchUpcomingMatches();
             break;
           case 'finished':
+            fetchedMatches = await fetchAllMatches();
+            break;
           case 'all-matches':
             fetchedMatches = await fetchAllMatches();
             break;
@@ -53,7 +124,7 @@ function HomePage() {
             fetchedMatches = await fetchLegendsLeagueMatches();
             break;
           default:
-            fetchedMatches = await fetchLiveMatches();
+            fetchedMatches = await fetchAllMatches();
             break;
         }
         setMatches(fetchedMatches || []);
@@ -70,7 +141,7 @@ function HomePage() {
   const handleScroll = () => {
     if (matchCarouselRef.current) {
       const scrollLeft = matchCarouselRef.current.scrollLeft;
-      const cardWidth = matchCarouselRef.current.querySelector('.snap-center').offsetWidth;
+      const cardWidth = matchCarouselRef.current.querySelector('.snap-center')?.offsetWidth || 350;
       const newActiveDot = Math.floor(scrollLeft / (cardWidth * 3)) % 3;
       setActiveDot(newActiveDot);
     }
@@ -80,7 +151,7 @@ function HomePage() {
 
   const scrollToCard = (dotIndex) => {
     if (matchCarouselRef.current) {
-      const cardWidth = matchCarouselRef.current.querySelector('.snap-center').offsetWidth;
+      const cardWidth = matchCarouselRef.current.querySelector('.snap-center')?.offsetWidth || 350;
       const cardsPerView = 3;
       const scrollPosition = dotIndex * cardsPerView * cardWidth;
       matchCarouselRef.current.scrollTo({
@@ -90,11 +161,18 @@ function HomePage() {
     }
   };
 
+  // Show skeleton while loading
+  if (loading) {
+    return <HomePageSkeleton />;
+  }
+
   return (
-    <div className="min-h-[50%] relative overflow-y-auto">
+    <div className="min-h-[50%] relative overflow-hidden">
       {/* Background Image with Dark Overlay */}
-      <div className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url('/hero-bg.png')" }}>
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: "url('/hero-bg.png')" }}
+      >
         <div className="absolute inset-0 bg-gradient-to-br from-slate-800/90 via-slate-900/90 to-blue-900/90"></div>
       </div>
 
@@ -110,8 +188,8 @@ function HomePage() {
                 onClick={() => setActiveFilter(filter.id)}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 whitespace-nowrap ${
                   activeFilter === filter.id
-                    ? 'bg-gradient-to-r from-red-500 to-orange-500 text-[#3f3f3f] shadow-lg'
-                    : 'bg-[#e6e6e6] text-[#181a1a] hover:bg-[#a3a3a3] hover:text-white'
+                    ? 'bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-lg'
+                    : 'bg-white/10 text-white hover:bg-white/20'
                 }`}
               >
                 {filter.label}
@@ -161,20 +239,7 @@ function HomePage() {
             </Menu>
           </div>
 
-          {/* Loading and Error States */}
-          {loading && (
-            <div className="text-center py-8 flex justify-center">
-              <BallTriangle
-                height={100}
-                width={100}
-                radius={5}
-                color="#f97316"
-                ariaLabel="ball-triangle-loading"
-                visible={true}
-              />
-            </div>
-          )}
-
+          {/* Error State */}
           {error && (
             <div className="text-center py-8">
               <p className="text-red-400 text-lg">{error}</p>
@@ -182,13 +247,16 @@ function HomePage() {
           )}
 
           {/* Match Cards Container */}
-          {!loading && !error && matches.length > 0 && (
+          {!error && matches.length > 0 && (
             <>
               <div
                 ref={matchCarouselRef}
                 onScroll={handleScroll}
-                className="flex gap-6 overflow-x-auto scrollbar-hide pb-4 snap-x snap-mandatory"
-                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory"
+                style={{ 
+                  scrollbarWidth: 'none', 
+                  msOverflowStyle: 'none'
+                }}
               >
                 {matches.map((match, index) => (
                   <div key={match.id || index} className="snap-center flex-shrink-0 w-full md:w-1/3">
@@ -213,7 +281,7 @@ function HomePage() {
           )}
 
           {/* No matches message */}
-          {!loading && !error && matches.length === 0 && (
+          {!error && matches.length === 0 && (
             <div className="text-center py-8">
               <p className="text-gray-400 text-lg">No matches found for the selected category.</p>
             </div>

@@ -25,6 +25,23 @@ export const fetchAllMatches = async () => {
     }
 };
 
+export const fetchTeamRankings = async (type, gender) => {
+    try {
+        const response = await axios.get(`${BASE_URL}/team-rankings/global`, {
+            params: {
+                type,
+                gender
+            }
+        });
+        // Find the ranking object matching the requested type and gender, then return its team array
+        const ranking = response.data.find(r => r.type === type.toUpperCase() && r.gender === gender.toLowerCase());
+        return ranking ? ranking.team.slice(0, 5) : []; // Return top 5 teams or empty array if not found
+    } catch (error) {
+        console.error('Error fetching team rankings:', error);
+        throw error;
+    }
+};
+
 export const fetchAusIndMatches = async () => {
     try {
         const response = await axios.get(`${BASE_URL}/matches/aus-ind`);
@@ -95,6 +112,15 @@ export const fetchTopPlayers = async () => {
     }
 };
 
+export const fetchPastMatches = async () => {
+    const params = {
+        'filter[status]': 'Finished',
+        'include': 'localteam,visitorteam,league,venue,runs'
+    };
+    return fetchData('/fixtures', params);
+};
+
+
 export const fetchTeams = async () => {
     try {
         const response = await axios.get(`${BASE_URL}/teams`);
@@ -115,15 +141,6 @@ export const fetchLeagues = async () => {
     }
 };
 
-export const fetchTeamRankings = async () => {
-    try {
-        const response = await axios.get(`${BASE_URL}/team-rankings/global`);
-        return response.data;
-    } catch (error) {
-        console.error("Error fetching global team rankings:", error);
-        return [];
-    }
-};
 
 export const fetchVideos = async () => {
     try {
