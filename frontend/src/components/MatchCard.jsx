@@ -1,0 +1,139 @@
+import React from 'react';
+import { Link } from 'react-router-dom';
+
+function MatchCard({ match }) {
+  // Determine match type based on status or other properties
+  const getMatchType = () => {
+    // Check for a variety of possible live and upcoming status strings
+    if (match.status === 'Live' || match.status_id === 2 || match.note?.toLowerCase().includes('live')) {
+      return 'LIVE';
+    } else if (match.status === 'Fixture' || match.status_id === 1 || match.time?.status === 'Scheduled') {
+      return 'UPCOMING';
+    } else {
+      return 'RESULT';
+    }
+  };
+
+  const matchType = getMatchType();
+
+  const getStatusColor = (type) => {
+    switch(type) {
+      case 'RESULT': return 'text-gray-600';
+      case 'LIVE': return 'text-red-500';
+      case 'UPCOMING': return 'text-blue-500';
+      default: return 'text-gray-600';
+    }
+  };
+
+  const getStatusBg = (type) => {
+    switch(type) {
+      case 'RESULT': return 'bg-gray-100';
+      case 'LIVE': return 'bg-red-50';
+      case 'UPCOMING': return 'bg-blue-50';
+      default: return 'bg-gray-100';
+    }
+  };
+
+  // Extract team data with fallbacks
+  const team1Code = match.localteam?.code || 'T1';
+  const team2Code = match.visitorteam?.code || 'T2';
+  const team1Name = match.localteam?.name || 'Team A';
+  const team2Name = match.visitorteam?.name || 'Team B';
+  const team1Flag = match.localteam?.image_path || `https://via.placeholder.com/60.png?text=${team1Code}`;
+  const team2Flag = match.visitorteam?.image_path || `https://via.placeholder.com/60.png?text=${team2Code}`;
+  
+  // Format match date and time
+  const matchDate = match.starting_at ? new Date(match.starting_at).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+  }) : '';
+  
+  const matchTime = match.starting_at ? new Date(match.starting_at).toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  }) : '';
+
+  // Get scores if available
+  const team1Score = match.runs?.find(run => run.team_id === match.localteam_id)?.score || '';
+  const team2Score = match.runs?.find(run => run.team_id === match.visitorteam_id)?.score || '';
+
+  return (
+    <div className="bg-white rounded-xl shadow-lg p-4 w-[22rem] flex-shrink-0 font-open-sans">
+      {/* Header */}
+      <div className="flex items-center gap-2 mb-2">
+        <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${getStatusColor(matchType)} ${getStatusBg(matchType)}`}>
+          {matchType}
+        </span>
+        <span className="text-xs text-gray-600">●</span>
+        <span className="text-xs text-gray-600 font-medium">{match.league?.name || 'Cricket Match'}</span>
+      </div>
+
+      {/* Match Details */}
+      <div className="mb-2">
+        <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
+          <span className="font-medium">{match.round || match.stage || 'Match'}</span>
+          <span className="text-red-500">📍</span>
+          <span>{match.venue?.name || 'TBD'}</span>
+        </div>
+      </div>
+
+      {/* Teams */}
+      <div className="space-y-2 mb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img src={team1Flag} alt={team1Name} className="w-6 h-6 rounded-full object-cover" />
+            <span className="font-bold text-gray-800">{team1Name}</span>
+          </div>
+          {team1Score && (
+            <span className="text-sm font-mono text-gray-700">{team1Score}</span>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img src={team2Flag} alt={team2Name} className="w-6 h-6 rounded-full object-cover" />
+            <span className="font-bold text-gray-800">{team2Name}</span>
+          </div>
+          {team2Score ? (
+            <span className="text-sm font-mono text-gray-700">{team2Score}</span>
+          ) : matchType === 'UPCOMING' && (
+            <span className="text-sm text-gray-500 italic">Yet to bat</span>
+          )}
+        </div>
+
+        {/* Upcoming match timing */}
+        {matchType === 'UPCOMING' && matchDate && matchTime && (
+          <div className="flex justify-end pt-1">
+            <div className="text-right">
+              <div className="text-sm font-medium text-gray-800">{matchDate}</div>
+              <div className="text-lg font-bold text-gray-800">{matchTime}</div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Result/Status */}
+      <div className="text-center py-2 bg-gray-50 rounded-lg mb-3">
+        <span className="text-sm font-medium text-gray-600">
+          {match.note || match.status || 'Match Details'}
+        </span>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex gap-2 text-xs">
+        <button className="flex-1 py-1 text-gray-600 hover:text-gray-800 font-medium">
+          Schedule
+        </button>
+        <button className="flex-1 py-1 text-gray-600 hover:text-gray-800 font-medium">
+          Report
+        </button>
+        <button className="flex-1 py-1 text-gray-600 hover:text-gray-800 font-medium">
+          Series
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default MatchCard;
