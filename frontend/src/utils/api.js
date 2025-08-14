@@ -1,12 +1,18 @@
 import axios from 'axios';
 
-// Get the environment variable from Vercel's build process.
-// If it's not 'production', it will default to 'development'.
-const isProduction = process.env.REACT_APP_VERCEL_ENV === 'production';
+// Use import.meta.env to get environment variables.
+// In development, the mode is 'development'.
+// In a production build, the mode is 'production'.
+// The VITE_RENDER_URL variable must be defined in your .env file
+// and in your Vercel/Render environment settings.
+const BASE_URL = import.meta.env.MODE === 'production'
+    ? import.meta.env.VITE_RENDER_URL
+    : 'http://localhost:3001/api';
 
-const BASE_URL = isProduction
-  ? 'https://cricket-api.onrender.com/api'
-  : 'http://localhost:3001/api';
+// Double-check the BASE_URL to ensure it's set correctly
+if (!BASE_URL || BASE_URL.includes('undefined')) {
+    console.error("API BASE_URL is not defined correctly. Check your environment variables.");
+}
 
 export const fetchAllMatches = async () => {
     try {
