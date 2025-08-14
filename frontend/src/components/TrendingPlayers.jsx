@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const BASE_URL = 'http://localhost:3001/api';
+// Use the live backend URL instead of localhost
+const BASE_URL = 'https://cricket-api-xieo.onrender.com/api';
 
-/**
- * Fetches the top players from the backend API.
- * @returns {Array} An array of top player data or an empty array on error.
- */
 export const fetchTopPlayers = async () => {
     try {
         const response = await axios.get(`${BASE_URL}/players/top`);
         return response.data;
     } catch (error) {
-        console.error("Error fetching top players:", error);
+        console.error("Error fetching top players:", error.message, error.code, error.config.url);
+        if (error.code === 'ERR_NETWORK' || error.code === 'ERR_BLOCKED_BY_CLIENT') {
+            console.warn("Network error detected. Ensure the backend URL is correct and accessible.");
+        }
         return [];
     }
 };
@@ -74,7 +74,7 @@ const TrendingPlayers = () => {
             <section className="max-w-7xl mx-auto px-4 py-12">
                 <h2 className="text-center text-4xl font-bold mb-10 text-gray-800">Trending Players</h2>
                 <div className="flex justify-center flex-wrap gap-6">
-                    {[...Array(5)].map((_, index) => (
+                    {[...Array(6)].map((_, index) => ( // Adjusted to 6 to match playersPerPage
                         <div key={index} className="w-full max-w-[200px] text-center p-4 bg-gray-100 rounded-xl shadow-md animate-pulse border border-gray-200">
                             <div className="overflow-hidden rounded-full w-32 h-32 mx-auto mb-4 bg-gray-300"></div>
                             <div className="h-6 bg-gray-300 rounded w-3/4 mx-auto mb-2"></div>
@@ -96,7 +96,6 @@ const TrendingPlayers = () => {
             <div className="container mx-auto px-4">
                 <h2 className="text-center text-4xl font-bold mb-10 text-gray-800">Trending Players</h2>
 
-                {/* Desktop layout (6 columns) - only visible on lg and above (≥1024px) */}
                 <div className="hidden lg:grid lg:grid-cols-6 gap-6 justify-items-center">
                     {displayedPlayers.map((player) => (
                         <div key={player.id} className="w-full max-w-[200px] text-center p-4 bg-gray-50 rounded-xl shadow-md border border-gray-100 transform hover:scale-105 transition-transform duration-300">
@@ -114,7 +113,6 @@ const TrendingPlayers = () => {
                     ))}
                 </div>
 
-                {/* Medium layout (2 rows of 3 columns) - visible only on md (768px–1023px) */}
                 <div className="hidden md:grid md:grid-cols-3 md:gap-6 lg:hidden">
                     {displayedPlayers.map((player) => (
                         <div key={player.id} className="w-full max-w-[200px] text-center p-4 bg-gray-50 rounded-xl shadow-md border border-gray-100 transform hover:scale-105 transition-transform duration-300">
@@ -132,7 +130,6 @@ const TrendingPlayers = () => {
                     ))}
                 </div>
 
-                {/* Mobile carousel layout - visible only on screens < md (<768px) */}
                 <div className="md:hidden relative">
                     <div className="overflow-hidden">
                         <div
@@ -155,7 +152,6 @@ const TrendingPlayers = () => {
                             ))}
                         </div>
                     </div>
-                    {/* Navigation dots for mobile */}
                     {allPlayers.length > 0 && (
                         <div className="flex justify-center mt-4 space-x-2">
                             {Array.from({ length: totalPages }).map((_, index) => (
@@ -171,7 +167,6 @@ const TrendingPlayers = () => {
                     )}
                 </div>
 
-                {/* Carousel navigation arrows (optional for mobile) */}
                 {allPlayers.length > playersPerPage && (
                     <div className="md:hidden flex justify-between mt-4 px-4">
                         <button
