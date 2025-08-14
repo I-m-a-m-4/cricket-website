@@ -73,15 +73,26 @@ export const fetchLiveMatches = async () => {
 };
 
 export const fetchUpcomingMatches = async () => {
-    try {
-        const response = await axios.get(`${BASE_URL}/matches/upcoming`);
-        return response.data;
-    } catch (error) {
-        console.error("Error fetching upcoming matches:", error);
-        return [];
-    }
-};
+  if (!API_TOKEN) {
+    throw new Error('API_TOKEN is not defined. Please set REACT_APP_SPORTMONKS_API_TOKEN in your .env file.');
+  }
 
+  try {
+    const today = new Date().toISOString().split('T')[0]; // e.g., 2025-08-14
+    const nextWeek = new Date(new Date().setDate(new Date().getDate() + 7)).toISOString().split('T')[0]; // e.g., 2025-08-21
+    const response = await axios.get(`${BASE_URL}/fixtures`, {
+      params: {
+        api_token: API_TOKEN,
+        filter: `starts_between=${today},${nextWeek}`,
+        include: 'localteam,visitorteam,league',
+      },
+    });
+    return response.data.data; // Sportmonks wraps data in a 'data' array
+  } catch (error) {
+    console.error('Error fetching upcoming matches:', error.message);
+    throw error; // Let the component handle the error
+  }
+};
 export const fetchNews = async () => {
     try {
         const response = await axios.get(`${BASE_URL}/news`);
@@ -150,4 +161,26 @@ export const fetchVideos = async () => {
         console.error("Error fetching videos:", error);
         return [];
     }
+};
+
+export const fetchFixtures = async () => {
+  if (!API_TOKEN) {
+    throw new Error('API_TOKEN is not defined. Please set REACT_APP_SPORTMONKS_API_TOKEN in your .env file.');
+  }
+
+  try {
+    const today = new Date().toISOString().split('T')[0]; // e.g., 2025-08-15
+    const nextWeek = new Date(new Date().setDate(new Date().getDate() + 7)).toISOString().split('T')[0]; // e.g., 2025-08-22
+    const response = await axios.get(`${BASE_URL}/fixtures`, {
+      params: {
+        api_token: API_TOKEN,
+        filter: `starts_between=${today},${nextWeek}`,
+        include: 'manofseries,localteam,visitorteam,league',
+      },
+    });
+    return response.data.data; // Sportmonks wraps fixtures in a 'data' array
+  } catch (error) {
+    console.error('Error fetching fixtures:', error.message);
+    throw error;
+  }
 };

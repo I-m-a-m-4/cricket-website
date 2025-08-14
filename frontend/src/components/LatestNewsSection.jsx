@@ -32,12 +32,17 @@ export default function LatestNewsSection() {
   }
 
   if (news.length === 0) {
-    return null; 
+    return null;
   }
 
   const mainArticle = news[0];
-  // Slice to get the next four articles to match the design (1 main + 4 side)
   const sideArticles = news.slice(1, 5);
+
+  // Fallback link construction
+  const getArticleLink = (article) => {
+    // Assume match_id is available if it's a match-related article
+    return article.match_id ? `/match/${article.match_id}` : `/news/${article.id || "default"}`;
+  };
 
   return (
     <section className="max-w-7xl mx-auto px-4 py-12">
@@ -53,7 +58,7 @@ export default function LatestNewsSection() {
       <div className="grid md:grid-cols-3 gap-6">
         {/* Main article */}
         <Link
-          to={mainArticle.link}
+          to={getArticleLink(mainArticle) || "/"}
           className="relative rounded-xl overflow-hidden md:col-span-1 md:row-span-2 shadow-lg group"
         >
           <img
@@ -66,8 +71,8 @@ export default function LatestNewsSection() {
             <h3 className="text-xl font-bold">{mainArticle.title}</h3>
             <div className="flex items-center text-sm text-gray-300 mt-2">
               <FaRegCalendarAlt className="mr-2" />
-              {/* Note: The date is hardcoded as the API response doesn't provide it */}
-              Thu, 23 Nov
+              {/* Use current date as a fallback */}
+              {new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
             </div>
           </div>
         </Link>
@@ -77,7 +82,7 @@ export default function LatestNewsSection() {
           {sideArticles.map((article) => (
             <Link
               key={article.id}
-              to={article.link}
+              to={getArticleLink(article) || "/"}
               className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300"
             >
               <div className="relative">
@@ -86,8 +91,8 @@ export default function LatestNewsSection() {
                   alt={article.title}
                   className="w-full h-32 object-cover rounded-t-xl"
                 />
-                 <div className="absolute top-2 left-2 bg-gray-900/60 text-white text-xs font-bold px-2 py-1 rounded-full">
-                    {article.season?.name || 'News'}
+                <div className="absolute top-2 left-2 bg-gray-900/60 text-white text-xs font-bold px-2 py-1 rounded-full">
+                  {article.season?.name || "News"}
                 </div>
               </div>
               <div className="p-4 flex flex-col">
@@ -97,8 +102,7 @@ export default function LatestNewsSection() {
                 </p>
                 <div className="flex items-center text-xs text-gray-400 mt-3">
                   <FaRegCalendarAlt className="mr-2" />
-                  {/* Note: The date is hardcoded as the API response doesn't provide it */}
-                  Thu, 23 Nov
+                  {new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
                 </div>
               </div>
             </Link>

@@ -13,7 +13,7 @@ import KeySeriesSection from "./components/KeySeriesSection.jsx";
 import VideosSection from "./components/VideoSection.jsx";
 import TrendingPlayers from "./components/TrendingPlayers.jsx";
 import RankingsSection from "./components/RankingSection.jsx";
-
+import FixturePage from "./pages/FixturePage.jsx";
 // Placeholder components for missing pages
 const CricketPage = () => <div>Cricket Page Content</div>;
 const RankingPage = () => <div>Ranking Page Content</div>;
@@ -33,6 +33,7 @@ function App() {
         <Route path="/ranking" element={<RankingPage />} />
         <Route path="/live-match" element={<LiveMatchPage />} />
         <Route path="/contact" element={<ContactPage />} />
+        <Route path="/fixtures" element={<FixturePage />} /> {/* New route */}
       </Routes>
       <MustWatchSection />
       <MatchesSection />

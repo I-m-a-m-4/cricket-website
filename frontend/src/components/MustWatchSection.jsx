@@ -1,76 +1,107 @@
 import React, { useEffect, useState } from 'react';
 import { PlayCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 
-// Mock API functions with different videos for each category
+// Mock API functions (to be replaced with YouTube API calls)
 const fetchNews = async () => [];
 const fetchUpcomingMatches = async () => [
   { id: 1, localteam: { name: 'India' }, visitorteam: { name: 'Australia' }, starting_at: '2025-08-20', gender: 'male' },
   { id: 2, localteam: { name: 'India' }, visitorteam: { name: 'England' }, starting_at: '2025-08-25', gender: 'male' },
   { id: 3, localteam: { name: 'India' }, visitorteam: { name: 'South Africa' }, starting_at: '2025-08-22', gender: 'female' },
-  { id: 4, localteam: { name: 'India' }, visitorteam: { name: 'New Zealand' }, starting_at: '2025-08-27', gender: 'female' }
+  { id: 4, localteam: { name: 'India' }, visitorteam: { name: 'New Zealand' }, starting_at: '2025-08-27', gender: 'female' },
 ];
 
 const fetchVideosByCategory = async (category) => {
+  // Placeholder: Replace with YouTube API call when quota is available
   const videoCategories = {
     featured: [
       { id: 'dQw4w9WgXcQ', title: 'What will Kumble and Moody remember the World Cup for?', channelTitle: 'ESPNcricinfo', description: "Shami's wicket-taking spree, Afghanistan making a statement, and more" },
-      { id: 'ScMzIvxBSi4', title: 'World Cup 2023 Highlights', channelTitle: 'Cricket Official', description: 'Best moments from the tournament' }
+      { id: 'ScMzIvxBSi4', title: 'World Cup 2023 Highlights', channelTitle: 'Cricket Official', description: 'Best moments from the tournament' },
     ],
     indiaMen: [
       { id: 'M7lc1UVf-VE', title: "India Men's Team Training Session", channelTitle: 'BCCI', description: 'Exclusive behind-the-scenes footage' },
-      { id: 'kJQP7kiw5Fk', title: 'Kohli Century Compilation', channelTitle: 'Cricket Highlights', description: 'Best centuries by Virat Kohli' }
+      { id: 'kJQP7kiw5Fk', title: 'Kohli Century Compilation', channelTitle: 'Cricket Highlights', description: 'Best centuries by Virat Kohli' },
     ],
     indiaWomen: [
       { id: 'ZbZSe6N_BXs', title: "India Women's Cricket Journey", channelTitle: 'BCCI Women', description: 'Rise of women cricket in India' },
-      { id: 'A_MjCqQoLLA', title: 'Smriti Mandhana Best Shots', channelTitle: 'Women Cricket', description: 'Beautiful strokes compilation' }
+      { id: 'A_MjCqQoLLA', title: 'Smriti Mandhana Best Shots', channelTitle: 'Women Cricket', description: 'Beautiful strokes compilation' },
     ],
     worldCup: [
       { id: 'fJ9rUzIMcZQ', title: 'World Cup 2023 Final Highlights', channelTitle: 'ICC', description: 'The thrilling final match' },
-      { id: 'QH2-TGUlwu4', title: 'World Cup Best Catches', channelTitle: 'Cricket World', description: 'Spectacular catches from the tournament' }
+      { id: 'QH2-TGUlwu4', title: 'World Cup Best Catches', channelTitle: 'Cricket World', description: 'Spectacular catches from the tournament' },
     ],
     topWicketTakers: [
       { id: 'DLzxrzFCyOs', title: 'Top Wicket Takers Analysis', channelTitle: 'Cricket Stats', description: 'Statistical breakdown of leading bowlers' },
-      { id: 'TcMBFSGVi1c', title: 'Best Bowling Figures WC 2023', channelTitle: 'ESPN Cricinfo', description: 'Outstanding bowling performances' }
+      { id: 'TcMBFSGVi1c', title: 'Best Bowling Figures WC 2023', channelTitle: 'ESPN Cricinfo', description: 'Outstanding bowling performances' },
     ],
     topScorers: [
       { id: 'SQoA_wjmE9w', title: 'Highest Run Scorers WC 2023', channelTitle: 'Cricket Analysis', description: 'Top batsmen of the tournament' },
-      { id: 'XgYu7-DQjDQ', title: 'Century Makers Compilation', channelTitle: 'ICC Highlights', description: 'All centuries from World Cup 2023' }
+      { id: 'XgYu7-DQjDQ', title: 'Century Makers Compilation', channelTitle: 'ICC Highlights', description: 'All centuries from World Cup 2023' },
     ],
     askCricinfo: [
       { id: 'RgKAFK5djSk', title: 'Ask Cricinfo: Rules Explained', channelTitle: 'ESPN Cricinfo', description: 'Cricket rules and regulations explained' },
-      { id: 'wJWksPWDKOc', title: 'Cricket Trivia with Experts', channelTitle: 'Cricinfo Plus', description: 'Fun cricket facts and trivia' }
+      { id: 'wJWksPWDKOc', title: 'Cricket Trivia with Experts', channelTitle: 'Cricinfo Plus', description: 'Fun cricket facts and trivia' },
     ],
     iccPlayerRankings: [
       { id: 'L_jWHffIx5E', title: 'ICC Player Rankings Update', channelTitle: 'ICC Official', description: 'Latest player rankings analysis' },
-      { id: 'OPf0YbXqDm0', title: 'Top Ranked Players Discussion', channelTitle: 'Cricket Today', description: 'Expert discussion on current rankings' }
+      { id: 'OPf0YbXqDm0', title: 'Top Ranked Players Discussion', channelTitle: 'Cricket Today', description: 'Expert discussion on current rankings' },
     ],
     iccTeamRankings: [
       { id: 'eVTXPUF4Oz4', title: 'ICC Team Rankings Breakdown', channelTitle: 'ICC', description: 'Current team standings explained' },
-      { id: 'KmtzQCSh6xg', title: 'Team Rankings History', channelTitle: 'Cricket Archive', description: 'Evolution of team rankings over time' }
+      { id: 'KmtzQCSh6xg', title: 'Team Rankings History', channelTitle: 'Cricket Archive', description: 'Evolution of team rankings over time' },
     ],
     '30years': [
       { id: 'iik25wqIuFo', title: '30 Years of ESPNcricinfo Journey', channelTitle: 'ESPN Cricinfo', description: 'Celebrating three decades of cricket coverage' },
-      { id: 'ZhfUv0spHCY', title: 'Cricket Evolution - 30 Years', channelTitle: 'Cricinfo Legacy', description: 'How cricket changed over 30 years' }
-    ]
+      { id: 'ZhfUv0spHCY', title: 'Cricket Evolution - 30 Years', channelTitle: 'Cricinfo Legacy', description: 'How cricket changed over 30 years' },
+    ],
   };
   
   return videoCategories[category] || videoCategories.featured;
 };
 
+// Placeholder for YouTube API integration (to be implemented when quota is available)
+// const fetchVideosFromYouTube = async (category, apiKey) => {
+//   const searchTerms = {
+//     featured: 'cricket highlights 2023',
+//     indiaMen: 'india men cricket highlights',
+//     indiaWomen: 'india women cricket highlights',
+//     worldCup: 'world cup 2023 cricket highlights',
+//     topWicketTakers: 'top wicket takers world cup 2023',
+//     topScorers: 'top scorers world cup 2023',
+//     askCricinfo: 'cricket rules explained',
+//     iccPlayerRankings: 'icc player rankings 2023',
+//     iccTeamRankings: 'icc team rankings 2023',
+//     '30years': '30 years of cricket history',
+//   };
+//   const query = searchTerms[category] || 'cricket highlights';
+//   const response = await axios.get(`https://www.googleapis.com/youtube/v3/search`, {
+//     params: {
+//       part: 'snippet',
+//       q: query,
+//       type: 'video',
+//       maxResults: 5,
+//       key: apiKey,
+//     },
+//   });
+//   return response.data.items.map(item => ({
+//     id: item.id.videoId,
+//     title: item.snippet.title,
+//     channelTitle: item.snippet.channelTitle,
+//     description: item.snippet.description,
+//   }));
+// };
+
 const LoadingSkeleton = () => (
-  <div className="bg-white border border-gray-200 rounded-xl shadow-lg max-w-6xl mx-auto p-4 sm:p-6 my-8 animate-pulse" style={{ fontFamily: 'Open Sans, sans-serif' }}>
+  <div className="bg-gray-100 border border-gray-200 rounded-xl shadow-lg max-w-6xl mx-auto p-4 sm:p-6 my-8 animate-pulse" style={{ fontFamily: 'Open Sans, sans-serif' }}>
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 sm:gap-0">
       <div className="h-6 bg-gray-300 rounded w-48"></div>
       <div className="h-4 bg-gray-300 rounded w-20"></div>
     </div>
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
-      {/* Left Column - Navigation Skeleton */}
       <div className="space-y-2">
         {[...Array(9)].map((_, i) => (
           <div key={i} className="h-10 bg-gray-300 rounded"></div>
         ))}
       </div>
-      {/* Right Column - Content Skeleton */}
       <div className="lg:col-span-3">
         <div className="bg-gray-200 p-4 rounded-xl space-y-4">
           <div className="h-6 bg-gray-300 rounded w-full"></div>
@@ -103,10 +134,9 @@ const MustWatchSection = () => {
         setContent({
           news: newsData,
           indiaMen: matchesData.filter(match => match.gender === 'male').slice(0, 2),
-          indiaWomen: matchesData.filter(match => match.gender === 'female').slice(0, 2)
+          indiaWomen: matchesData.filter(match => match.gender === 'female').slice(0, 2),
         });
         setVideos(videosData);
-        
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -117,13 +147,12 @@ const MustWatchSection = () => {
     fetchData();
   }, []);
 
-  // Load different videos when filter changes
   useEffect(() => {
     const loadVideosForCategory = async () => {
       try {
         const categoryVideos = await fetchVideosByCategory(selectedView);
         setVideos(categoryVideos);
-        setCurrentVideoIndex(0); // Reset to first video when changing category
+        setCurrentVideoIndex(0);
       } catch (error) {
         console.error("Error fetching category videos:", error);
       }
@@ -142,7 +171,7 @@ const MustWatchSection = () => {
 
   const renderContent = () => {
     if (!content && selectedView !== 'featured') return null;
-    
+
     switch (selectedView) {
       case 'indiaMen':
         return (
@@ -170,7 +199,6 @@ const MustWatchSection = () => {
         const currentVideo = videos[currentVideoIndex];
         return (
           <div className="space-y-4">
-            {/* Video Title and Description Above Video */}
             {currentVideo && (
               <div className="space-y-2">
                 <h3 className="text-lg sm:text-xl font-semibold text-black leading-tight">
@@ -181,8 +209,6 @@ const MustWatchSection = () => {
                 </p>
               </div>
             )}
-            
-            {/* Video Player */}
             {currentVideo ? (
               <div className="relative overflow-hidden w-full rounded-lg shadow-sm bg-black">
                 <iframe
@@ -193,8 +219,6 @@ const MustWatchSection = () => {
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
                 ></iframe>
-                
-                {/* Navigation Arrows */}
                 <div className="absolute top-0 left-0 w-full h-full flex items-center justify-between pointer-events-none p-4">
                   {videos.length > 1 && (
                     <>
@@ -215,8 +239,6 @@ const MustWatchSection = () => {
                     </>
                   )}
                 </div>
-                
-                {/* Video Duration Badge */}
                 <div className="absolute bottom-4 right-4 bg-black bg-opacity-80 text-white text-xs px-2 py-1 rounded">
                   04:48
                 </div>
@@ -240,7 +262,7 @@ const MustWatchSection = () => {
     { key: 'ask-cricinfo', label: 'Ask Cricinfo', view: 'askCricinfo' },
     { key: 'icc-player', label: 'ICC player rankings', view: 'iccPlayerRankings' },
     { key: 'icc-team', label: 'ICC team rankings', view: 'iccTeamRankings' },
-    { key: '30-years', label: '30 years of ESPNcricinfo', view: '30years' }
+    { key: '30-years', label: '30 years of ESPNcricinfo', view: '30years' },
   ];
 
   if (loading) {
@@ -249,7 +271,7 @@ const MustWatchSection = () => {
 
   return (
     <div className="flex justify-center px-4 my-8" style={{ fontFamily: 'Open Sans, sans-serif' }}>
-      <section className="bg-white  rounded-xl  max-w-6xl w-full p-4 sm:p-6">
+      <section className="bg-white rounded-xl max-w-6xl w-full p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 sm:gap-0">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Must Watch</h2>
           <a href="#" className="text-red-600 font-semibold hover:text-red-700 transition-colors text-sm">
@@ -258,7 +280,6 @@ const MustWatchSection = () => {
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8 items-start">
-          {/* Left Column - Navigation */}
           <div className="space-y-1 lg:self-start">
             {menuItems.map((item) => (
               <button
@@ -266,7 +287,7 @@ const MustWatchSection = () => {
                 onClick={() => setSelectedView(item.view)}
                 className={`w-full text-left px-3 py-2.5 rounded text-sm font-bold transition-all duration-200 shadow-sm ${
                   selectedView === item.view
-                    ? 'bg-gray-200 text-black shadow-md'
+                    ? 'bg-red-500 text-white shadow-md'
                     : 'text-black hover:bg-gray-100 hover:shadow-md bg-gray-50'
                 }`}
               >
@@ -275,7 +296,6 @@ const MustWatchSection = () => {
             ))}
           </div>
           
-          {/* Right Column - Dynamic Content */}
           <div className="lg:col-span-3 lg:self-start">
             <div className="bg-white">
               {renderContent()}
