@@ -275,24 +275,6 @@ app.get('/api/teams', async (req, res) => {
   }
 });
 
-app.get('/api/players/top', async (req, res) => {
-  try {
-    const response = await axios.get(`${API_BASE_URL}/players`, {
-      params: {
-        api_token: API_TOKEN,
-        'include': 'country,career' // Updated to valid includes
-      }
-    });
-    res.json(response.data.data);
-  } catch (error) {
-    console.error('Error fetching top players:', error.message);
-    if (error.response) {
-      console.error('API Response Status:', error.response.status);
-      console.error('API Response Data:', error.response.data);
-    }
-    res.status(500).json({ error: 'Failed to fetch top players' });
-  }
-});
 // New endpoint to get a list of all leagues
 app.get('/api/leagues', async (req, res) => {
   try {
