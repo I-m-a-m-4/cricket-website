@@ -215,6 +215,26 @@ app.get('/api/videos', async (req, res) => {
     }
 });
 
+app.get('/api/fixtures', async (req, res) => {
+    try {
+        const response = await axios.get(`${API_BASE_URL}/fixtures`, {
+            params: {
+                api_token: API_TOKEN,
+                ...req.query // pass through query params from frontend
+            }
+        });
+        res.json(response.data.data);
+    } catch (error) {
+        console.error('Error fetching fixtures:', error.message);
+        if (error.response) {
+            console.error('API Response Status:', error.response.status);
+            console.error('API Response Data:', error.response.data);
+        }
+        res.status(500).json({ error: 'Failed to fetch fixtures' });
+    }
+});
+
+
 // New endpoint to get standings for a specific season
 app.get('/api/standings/:seasonId', async (req, res) => {
     try {
