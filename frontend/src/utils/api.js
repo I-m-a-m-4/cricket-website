@@ -2,6 +2,7 @@ import axios from 'axios';
 
 // Get the base URL from the environment variables.
 let BASE_URL;
+const API_TOKEN = import.meta.env.VITE_SPORTMONKS_API_TOKEN;
 
 // Correctly set the BASE_URL based on the environment.
 // This is the most reliable way to handle environment variables with Vite.

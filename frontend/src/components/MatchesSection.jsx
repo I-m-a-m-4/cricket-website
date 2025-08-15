@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { fetchUpcomingMatches } from '../utils/api'; // Adjust the import path as needed
+import { fetchUpcomingMatches } from '../utils/api';
 
 function MatchesSection() {
   const [matches, setMatches] = useState([]);
@@ -8,39 +8,46 @@ function MatchesSection() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    let isMounted = true;
+
     const loadMatches = async () => {
-      setLoading(true); // Ensure loading starts fresh
-      setError(null); // Clear any previous errors
+      setLoading(true);
+      setError(null);
+
       try {
         const data = await fetchUpcomingMatches();
+
+        if (!isMounted) return; // avoid state update after unmount
+
         if (data && data.length > 0) {
-          setMatches(data.slice(0, 3)); // Only set matches if data is valid
-        } else {
-          // Do not set error here; keep loading true to show skeleton
-          console.warn('No matches available, keeping skeleton animation.');
+          setMatches(data.slice(0, 3));
+        } else if (data && data.length === 0) {
+          // keep matches empty, show skeleton until timeout or fallback
+          console.warn('No matches yet.');
         }
       } catch (err) {
-        setError('Failed to load matches due to a network or API issue.'); // Only set error for critical failures
+        if (!isMounted) return;
         console.error('Fetch error:', err);
+        setError('Failed to load matches.');
       } finally {
-        // Only stop loading if we have matches or a critical error
-        if (matches.length > 0 || error) {
-          setLoading(false);
-        }
+        if (!isMounted) return;
+        setLoading(false);
       }
     };
+
     loadMatches();
-  }, []); // Empty dependency array ensures this runs once on mount
+    return () => { isMounted = false; };
+  }, []);
 
   const getTimeDifference = (dateStr) => {
     const now = new Date();
     const matchDate = new Date(dateStr);
-    const diffTime = Math.ceil((matchDate - now) / (1000 * 60 * 60 * 24));
-    return diffTime > 0 ? `${diffTime} days To go` : 'Live';
+    const diffDays = Math.ceil((matchDate - now) / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? `${diffDays} days To go` : 'Live';
   };
 
-  // Show skeleton if loading or if no matches and no critical error
-  if (loading || (matches.length === 0 && !error)) {
+  if (loading) {
+    // Always show skeleton while loading
     return (
       <section className="bg-gray-50 py-6">
         <div className="container mx-auto px-4">
@@ -109,21 +116,23 @@ function MatchesSection() {
             <div key={match.id} className="bg-white p-4 rounded-lg shadow-md">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-red-500 font-semibold">RESULT</span>
-                <span className="text-gray-600">• {match.league?.name || 'Australia tour of India, 2023-24'}</span>
+                <span className="text-gray-600">• {match.league?.name || 'League Name'}</span>
               </div>
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-2">
                   <img src={match.localteam?.image_path} alt="Team Logo" className="w-6 h-6" />
-                  <span>{match.localteam?.name || 'SA Cricket'}</span>
+                  <span>{match.localteam?.name}</span>
                 </div>
                 <span>vs</span>
                 <div className="flex items-center space-x-2">
                   <img src={match.visitorteam?.image_path} alt="Team Logo" className="w-6 h-6" />
-                  <span>{match.visitorteam?.name || 'Action Cricket'}</span>
+                  <span>{match.visitorteam?.name}</span>
                 </div>
               </div>
               <div className="text-gray-600 mb-2">
-                {match.starting_at ? new Date(match.starting_at).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata' }) : '26 November, 2023 | 7:00 PM IST'}
+                {match.starting_at
+                  ? new Date(match.starting_at).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata' })
+                  : 'Date TBD'}
               </div>
               <div className="text-gray-500 mb-2">{getTimeDifference(match.starting_at)}</div>
               <a href={`/match/${match.id}`} className="text-red-500 font-semibold">Match Info →</a>

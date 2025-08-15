@@ -40,11 +40,11 @@ const TrendingPlayers = () => {
     if (loading) {
         return (
             <section className="max-w-7xl mx-auto px-4 py-12">
-                <h2 className="text-center text-4xl font-bold mb-10 text-gray-800">Trending Players</h2>
+                <h2 className="text-center text-4xl font-bold mb-10 text-gray-800">Trending <span className='text-red-500'> Players</span></h2>
 
                 {/* Mobile Skeleton */}
                 <div className="md:hidden flex gap-4 overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                    {[...Array(3)].map((_, index) => (
+                    {[...Array(5)].map((_, index) => (
                         <div key={index} className="min-w-[200px] bg-white rounded-xl shadow-md overflow-hidden animate-pulse p-4 text-center border border-gray-200">
                             <div className="overflow-hidden rounded-full w-32 h-32 mx-auto bg-gray-300 mb-4"></div>
                             <div className="h-6 bg-gray-300 rounded w-3/4 mx-auto mb-2"></div>
@@ -108,34 +108,32 @@ const TrendingPlayers = () => {
                     ))}
                 </div>
 
-                {/* Mobile - scroll with no visible scrollbar */}
-                <div
-                    className="md:hidden flex gap-4 py-2 overflow-x-auto"
-                    style={{
-                        scrollbarWidth: 'none', // Firefox
-                        msOverflowStyle: 'none'  // IE/Edge
-                    }}
-                >
-                    {/* Chrome/Safari scrollbar hide */}
-                    <style>{`
-                        div::-webkit-scrollbar { display: none; }
-                    `}</style>
+           <div
+    className="md:hidden flex gap-4 py-2 overflow-x-auto"
+    style={{
+        scrollbarWidth: 'none', // Firefox
+        msOverflowStyle: 'none'  // IE/Edge
+    }}
+>
+    <style>{`
+        div::-webkit-scrollbar { display: none; }
+    `}</style>
 
-                    {allPlayers.map((player) => (
-                        <div key={player.id} className="min-w-[200px] flex-shrink-0 text-center p-4 bg-gray-50 rounded-xl shadow-md border border-gray-100">
-                            <div className="overflow-hidden rounded-full w-32 h-32 mx-auto mb-4 border-4 border-white shadow-lg">
-                                <img
-                                    src={player.image_path || `https://placehold.co/200x200/e5e7eb/6b7280?text=${player.fullname}`}
-                                    alt={player.fullname}
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => e.target.src = `https://placehold.co/200x200/e5e7eb/6b7280?text=${player.fullname}`}
-                                />
-                            </div>
-                            <h3 className="text-lg font-bold text-gray-800">{player.fullname}</h3>
-                            <p className="text-sm text-gray-500">{player.position?.name}</p>
-                        </div>
-                    ))}
-                </div>
+    {allPlayers.slice(0, 8).map((player) => (
+        <div key={player.id} className="min-w-[200px] flex-shrink-0 text-center p-4 bg-gray-50 rounded-xl shadow-md border border-gray-100">
+            <div className="overflow-hidden rounded-full w-32 h-32 mx-auto mb-4 border-4 border-white shadow-lg">
+                <img
+                    src={player.image_path || `https://placehold.co/200x200/e5e7eb/6b7280?text=${player.fullname}`}
+                    alt={player.fullname}
+                    className="w-full h-full object-cover"
+                    onError={(e) => e.target.src = `https://placehold.co/200x200/e5e7eb/6b7280?text=${player.fullname}`}
+                />
+            </div>
+            <h3 className="text-lg font-bold text-gray-800">{player.fullname}</h3>
+            <p className="text-sm text-gray-500">{player.position?.name}</p>
+        </div>
+    ))}
+</div>
             </div>
         </section>
     );
