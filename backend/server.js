@@ -92,6 +92,51 @@ app.get('/api/matches/legends-league', async (req, res) => {
     }
 });
 
+// server.js
+
+app.get('/api/rankings/icc/:format', async (req, res) => {
+  const { format } = req.params;
+  const validFormats = ['test', 'odi', 't20i'];
+  
+  if (!validFormats.includes(format)) {
+    return res.status(400).json({ error: 'Invalid format. Use: test, odi, t20i' });
+  }
+
+  try {
+    const url = `https://www.icc-cricket.com/rankings/mens/team-rankings/${format}`;
+    const response = await axios.get(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; CricketApp/1.0)'
+      }
+    });
+
+    // Regex to extract data
+    const regex = /<tr[^>]*>[\s\S]*?<td[^>]*>(\d+)<\/td>[\s\S]*?<img[^>]+alt="([^"]+)"[^>]*>[\s\S]*?<a[^>]+>([^<]+)<\/a>[\s\S]*?<td[^>]*>([\d.]+)<\/td>/g;
+    const html = response.data;
+    const rankings = [];
+    let match;
+
+    while ((match = regex.exec(html)) !== null) {
+      const [, rank, flagCode, teamName, points] = match;
+      rankings.push({
+        rank: parseInt(rank, 10),
+        name: teamName.trim(),
+        code: flagCode.trim(),
+        points: parseFloat(points),
+        image: `https://images.sportmonks.com/flags/${flagCode.toLowerCase()}.png` // Reliable flag CDN
+      });
+    }
+
+    if (rankings.length === 0) {
+      return res.status(500).json({ error: 'No teams found in HTML' });
+    }
+
+    res.json(rankings);
+  } catch (error) {
+    console.error('ICC Rankings Error:', error.message);
+    res.status(500).json({ error: 'Failed to fetch ICC rankings' });
+  }
+});
 app.get('/api/matches/recent', async (req, res) => {
     try {
         const response = await axios.get(`${API_BASE_URL}/fixtures`, {
