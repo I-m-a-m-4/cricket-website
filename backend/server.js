@@ -187,54 +187,68 @@ app.get('/api/news', async (req, res) => {
     }
 });
 
-// New endpoint to get videos from YouTube
 app.get('/api/videos', async (req, res) => {
-    try {
-        const query = 'cricket highlights';
-        const youtubeApiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${query}&type=video&key=${YOUTUBE_API_KEY}&maxResults=8`;
-        
-        const response = await axios.get(youtubeApiUrl);
-        
-        // Format the YouTube API response to be cleaner for the front-end
-        const formattedVideos = response.data.items.map(item => ({
-            id: item.id.videoId,
-            title: item.snippet.title,
-            thumbnail: item.snippet.thumbnails.high.url,
-            publishedAt: item.snippet.publishedAt,
-            channelTitle: item.snippet.channelTitle
-        }));
+  console.log('Received request for /api/videos');
+  try {
+    const query = 'cricket highlights';
+    const youtubeApiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${query}&type=video&key=${YOUTUBE_API_KEY}&maxResults=8`;
+    console.log('YouTube API URL:', youtubeApiUrl);
 
-        res.json(formattedVideos);
-    } catch (error) {
-        console.error('Error fetching videos from YouTube:', error.message);
-        if (error.response) {
-            console.error('YouTube API Response Status:', error.response.status);
-            console.error('YouTube API Response Data:', error.response.data);
-        }
-        res.status(500).json({ error: 'Failed to fetch videos' });
+    const response = await axios.get(youtubeApiUrl);
+    console.log('YouTube API Response:', response.data);
+
+    const formattedVideos = response.data.items.map(item => ({
+      id: item.id.videoId,
+      title: item.snippet.title,
+      thumbnail: item.snippet.thumbnails.high.url,
+      publishedAt: item.snippet.publishedAt,
+      channelTitle: item.snippet.channelTitle
+    }));
+
+    res.json(formattedVideos);
+  } catch (error) {
+    console.error('Error fetching videos from YouTube:', error.message);
+    if (error.response) {
+      console.error('YouTube API Response Status:', error.response.status);
+      console.error('YouTube API Response Data:', error.response.data);
     }
+    res.status(500).json({ error: 'Failed to fetch videos' });
+  }
 });
-
 app.get('/api/fixtures', async (req, res) => {
-    try {
-        const response = await axios.get(`${API_BASE_URL}/fixtures`, {
-            params: {
-                api_token: API_TOKEN,
-                ...req.query // pass through query params from frontend
-            }
-        });
-        res.json(response.data.data);
-    } catch (error) {
-        console.error('Error fetching fixtures:', error.message);
-        if (error.response) {
-            console.error('API Response Status:', error.response.status);
-            console.error('API Response Data:', error.response.data);
-        }
-        res.status(500).json({ error: 'Failed to fetch fixtures' });
+  console.log('Received request for /api/fixtures');
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const nextWeek = new Date(new Date().setDate(new Date().getDate() + 7)).toISOString().split('T')[0];
+
+    console.log('API Token:', process.env.SPORTMONKS_API_TOKEN);
+    const response = await axios.get(`${API_BASE_URL}/fixtures`, {
+      params: {
+        api_token: process.env.SPORTMONKS_API_TOKEN,
+        filter: `starts_between:${today},${nextWeek}`,
+        include: 'localteam,visitorteam,league',
+        ...req.query,
+      },
+      // httpsAgent: new (require('https').Agent)({ rejectUnauthorized: false }), // Comment out to test
+    });
+
+    if (!response.data || !Array.isArray(response.data.data)) {
+      throw new Error('Invalid response format from API');
     }
+
+    // console.log('Fetched data:', response.data.data); // Remove this line
+    res.json(response.data.data);
+  } catch (error) {
+    console.error('Error fetching fixtures:', error.message);
+    if (error.response) {
+      console.error('API Response Status:', error.response.status);
+      console.error('API Response Data:', error.response.data);
+    } else {
+      console.error('Non-API error:', error);
+    }
+    res.status(500).json({ error: 'Failed to fetch fixtures' });
+  }
 });
-
-
 // New endpoint to get standings for a specific season
 app.get('/api/standings/:seasonId', async (req, res) => {
     try {
