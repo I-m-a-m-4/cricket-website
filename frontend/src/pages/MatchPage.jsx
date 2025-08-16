@@ -1,55 +1,41 @@
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import React from 'react';
 
 function MatchPage() {
-  const { id } = useParams();
-  const [matchData, setMatchData] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // In a real app, you would fetch match details from your backend using the `id`
-    // e.g., fetchMatchDetails(id).then(data => setMatchData(data));
-    console.log(`Fetching details for match with ID: ${id}`);
-    
-    // Placeholder data for now
-    setTimeout(() => {
-      setMatchData({
-        id: id,
-        team1: "Team A",
-        team2: "Team B",
-        score: "250/5",
-        overs: "40.3",
-        venue: "Stadium XYZ",
-        commentary: ["Ball 1: Four!", "Ball 2: Wicket!"]
-      });
-      setLoading(false);
-    }, 1000);
-  }, [id]);
-
-  if (loading) {
-    return <div className="text-center mt-20 text-primary font-open-sans">Loading match details...</div>;
-  }
-
-  if (!matchData) {
-    return <div className="text-center mt-20 text-red-500 font-open-sans">Match not found.</div>;
-  }
+  const matchId = window.location.pathname.split('/match/')[1] || '3'; // Extract ID from URL
+  const match = {
+    id: matchId,
+    localteam: { name: 'Team A' },
+    visitorteam: { name: 'Team B' },
+    score: '250/5',
+    overs: '40.3',
+    venue: 'Stadium XYZ',
+    commentary: ['Ball 1: Four!', 'Ball 2: Wicket!'],
+  };
 
   return (
-    <div className="container mx-auto p-4 font-open-sans">
-      <h1 className="text-4xl font-extrabold font-cab text-dark-bg text-center my-8">
-        {matchData.team1} vs {matchData.team2}
-      </h1>
-      <div className="bg-light-bg rounded-lg shadow-md p-6">
-        <p className="text-xl font-bold text-dark-bg">Score: {matchData.score}</p>
-        <p className="text-gray-600">Overs: {matchData.overs}</p>
-        <p className="text-gray-600">Venue: {matchData.venue}</p>
-        <h2 className="text-2xl font-bold font-cab mt-6">Live Commentary</h2>
-        <ul className="list-disc list-inside mt-2">
-          {matchData.commentary.map((comment, index) => (
-            <li key={index}>{comment}</li>
-          ))}
-        </ul>
-      </div>
+    <div className="min-h-screen flex flex-col">
+      <main className="flex-grow bg-gradient-to-b from-gray-100 to-white py-10">
+        <div className="container mx-auto px-4">
+          <div className="bg-white rounded-xl shadow-lg p-6 max-w-2xl mx-auto">
+            <h1 className="text-3xl font-bold text-gray-900 text-center mb-6">
+              {match.localteam.name} vs {match.visitorteam.name}
+            </h1>
+            <div className="space-y-4">
+              <p className="text-lg text-gray-700 font-semibold">Score: {match.score}</p>
+              <p className="text-md text-gray-600">Overs: {match.overs}</p>
+              <p className="text-md text-gray-600">Venue: {match.venue}</p>
+              <div className="mt-4">
+                <h2 className="text-xl font-semibold text-gray-800 mb-2">Live Commentary</h2>
+                <ul className="list-disc pl-5 space-y-2 text-gray-600">
+                  {match.commentary.map((comment, index) => (
+                    <li key={index}>{comment}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
   );
 }

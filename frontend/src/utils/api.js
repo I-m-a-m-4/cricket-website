@@ -74,24 +74,19 @@ export const fetchLiveMatches = async () => {
 };
 
 export const fetchUpcomingMatches = async () => {
-  if (!API_TOKEN) {
-    throw new Error('API_TOKEN is not defined. Please set REACT_APP_SPORTMONKS_API_TOKEN in your .env file.');
-  }
-
   try {
-    const today = new Date().toISOString().split('T')[0]; // e.g., 2025-08-14
-    const nextWeek = new Date(new Date().setDate(new Date().getDate() + 7)).toISOString().split('T')[0]; // e.g., 2025-08-21
+    const today = new Date().toISOString().split('T')[0];
+    const nextWeek = new Date(new Date().setDate(new Date().getDate() + 7)).toISOString().split('T')[0];
     const response = await axios.get(`${BASE_URL}/fixtures`, {
       params: {
-        api_token: API_TOKEN,
-        filter: `starts_between=${today},${nextWeek}`,
+        filter: `starts_between:${today},${nextWeek}`,
         include: 'localteam,visitorteam,league',
       },
     });
-    return response.data.data; // Sportmonks wraps data in a 'data' array
+    return response.data;
   } catch (error) {
-    console.error('Error fetching upcoming matches:', error.message);
-    throw error; // Let the component handle the error
+    console.error('API Error:', error.message);
+    throw error;
   }
 };
 export const fetchNews = async () => {
@@ -125,13 +120,19 @@ export const fetchTopPlayers = async () => {
 };
 
 export const fetchPastMatches = async () => {
-    const params = {
+  try {
+    const response = await axios.get(`${BASE_URL}/fixtures`, {
+      params: {
         'filter[status]': 'Finished',
-        'include': 'localteam,visitorteam,league,venue,runs'
-    };
-    return fetchData('/fixtures', params);
+        include: 'localteam,visitorteam,league',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('API Error:', error.message);
+    throw error;
+  }
 };
-
 
 export const fetchTeams = async () => {
     try {
