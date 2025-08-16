@@ -1,13 +1,79 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <!-- Basic Meta Tags -->
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/ic.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Cricket Website</title>
+    <title>Live Cricket Scores & Updates | Real-Time Match Results & News</title>
+    <meta name="description" content="Get live cricket scores, real-time match updates, recent results, standings, and news from major leagues like IPL, The Ashes, and World Cup. Fast, accurate, and mobile-friendly." />
+    <meta name="keywords" content="cricket, live cricket scores, cricket updates, T20, ODI, Test match, IPL, World Cup, cricket standings, match results, cricket news" />
+    <meta name="author" content="Cricket Website Team" />
+    <meta name="robots" content="index, follow" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/ic.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <!-- Canonical URL (Prevent duplicate content) -->
+    <link rel="canonical" href="https://cricket-website-teal.vercel.app" />
+
+    <!-- Open Graph / Facebook (Social Sharing) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Live Cricket Scores & Updates | Real-Time Match Results" />
+    <meta property="og:description" content="Follow live cricket matches, scores, standings, and breaking news. Your #1 source for real-time cricket updates." />
+    <meta property="og:url" content="https://cricket-website-teal.vercel.app" />
+    <meta property="og:image" content="/images/og-cric-preview.jpg" />
+    <meta property="og:image:alt" content="Live Cricket Scores Dashboard" />
+    <meta property="og:site_name" content="Cricket Website" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Live Cricket Scores & Updates | Real-Time Match Results" />
+    <meta name="twitter:description" content="Live scores, standings, and news for all major cricket leagues. Updated every 5 minutes." />
+    <meta name="twitter:image" content="/images/og-cric-preview.jpg" />
+    <meta name="twitter:site" content="@cricketupdates" />
+    <meta name="twitter:creator" content="@cricketupdates" />
+
+    <!-- Preload Critical Assets (Optional for performance) -->
+    <link rel="preload" as="script" href="/src/main.jsx" />
+
+    <!-- Theme Color (for Android Chrome) -->
+    <meta name="theme-color" content="#1e40af" />
+
+    <!-- Language & Accessibility -->
+    <meta name="language" content="en" />
+    <meta name="geo.region" content="US" />
+    <meta name="geo.placename" content="Worldwide Cricket Coverage" />
+
+    <!-- Structured Data (JSON-LD) - Breadcrumb (Optional) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Cricket Website",
+      "url": "https://yourcricketwebsite.com",
+      "description": "Live cricket scores, standings, news, and fixtures from top leagues worldwide.",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Cricket Website",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://yourcricketwebsite.com/ic.png"
+        }
+      },
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://yourcricketwebsite.com/search?q={search_term}",
+        "query-input": "required name=search_term"
+      }
+    }
+    </script>
   </head>
   <body>
+    <!-- Root element for React app -->
     <div id="root"></div>
-<script type="module" src="/src/main.jsx"></script>  
-</body>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>

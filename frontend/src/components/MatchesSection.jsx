@@ -160,93 +160,122 @@ function MatchesSection({ limit = 6 }) {
             {showAll ? 'See Less' : 'See All'}
           </button>
         </div>
+    <div
+  ref={matchCarouselRef}
+  onScroll={handleScroll}
+  className="flex gap-4 md:gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scroll-smooth"
+  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+>
+  {loading
+    ? [...Array(3)].map((_, index) => (
         <div
-          ref={matchCarouselRef}
-          onScroll={handleScroll}
-          className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          key={index}
+          className="snap-center flex-shrink-0 w-80 md:w-96 lg:w-1/3 bg-white p-4 rounded-xl shadow-lg animate-pulse"
         >
-          {loading
-            ? [...Array(3)].map((_, index) => (
-                <div key={index} className="snap-center flex-shrink-0 w-full md:w-1/3 bg-white p-4 rounded-xl shadow-lg animate-pulse">
-                  <div className="flex justify-between mb-3">
-                    <div className="w-16 h-5 bg-gray-300 rounded"></div>
-                    <div className="w-24 h-5 bg-gray-300 rounded"></div>
-                  </div>
-                  <div className="flex justify-between mb-3">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
-                      <div className="w-20 h-5 bg-gray-300 rounded"></div>
-                    </div>
-                    <div className="w-12 h-12 bg-gray-300 rounded"></div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
-                      <div className="w-20 h-5 bg-gray-300 rounded"></div>
-                    </div>
-                  </div>
-                  <div className="w-28 h-5 bg-gray-300 rounded mb-2"></div>
-                  <div className="w-24 h-5 bg-gray-300 rounded"></div>
-                </div>
-              ))
-            : displayedMatches.map((match) => (
-                <div
-                  key={match.id}
-                  className="snap-center flex-shrink-0 w-full md:w-1/3 bg-gradient-to-br from-white to-gray-50 p-5 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100"
-                >
-                  <div className="flex justify-between items-center mb-4">
-                    <span className="text-red-600 font-semibold text-sm uppercase">
-                      {activeFilter === 'upcoming' ? 'Fixture' : activeFilter === 'live' ? 'Live' : 'Result'}
-                    </span>
-                    <span className="text-gray-500 text-sm">{match.league?.name || 'League Name'}</span>
-                  </div>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-3">
-                      <img
-                        src={match.localteam?.image_path || 'https://via.placeholder.com/40'}
-                        alt={match.localteam?.name || 'Team A'}
-                        className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
-                      />
-                      <span className="text-gray-900 font-semibold text-lg">{match.localteam?.name || 'Team A'}</span>
-                    </div>
-                    <img src="/vs.png" alt="vs" className="w-12 h-12 object-contain mx-2" />
-                    <div className="flex items-center space-x-3">
-                      <img
-                        src={match.visitorteam?.image_path || 'https://via.placeholder.com/40'}
-                        alt={match.visitorteam?.name || 'Team B'}
-                        className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
-                      />
-                      <span className="text-gray-900 font-semibold text-lg">{match.visitorteam?.name || 'Team B'}</span>
-                    </div>
-                  </div>
-                  <div className="text-gray-600 text-sm mb-3">
-                    {match.starting_at
-                      ? new Date(match.starting_at).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata' })
-                      : 'Date TBD'}
-                  </div>
-                  {activeFilter === 'finished' && (
-                    <div className="flex justify-between text-gray-800 font-medium mb-3">
-                      <span>{getScoreFromNote(match).localScore} ({match.localteam?.name || 'Team A'})</span>
-                      <span>{getScoreFromNote(match).visitorScore} ({match.visitorteam?.name || 'Team B'})</span>
-                    </div>
-                  )}
-                  <div className="text-gray-500 text-sm mb-4">{getMatchStatus(match)}</div>
-                  <a href={`/match/${match.id}`} className="text-red-600 font-semibold text-sm hover:text-red-800 transition-colors">
-                    Match Info →
-                  </a>
-                </div>
-              ))}
+          <div className="flex justify-between mb-3">
+            <div className="w-16 h-5 bg-gray-300 rounded"></div>
+            <div className="w-24 h-5 bg-gray-300 rounded"></div>
+          </div>
+          <div className="flex justify-between mb-3">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
+              <div className="w-20 h-5 bg-gray-300 rounded"></div>
+            </div>
+            <div className="w-12 h-12 bg-gray-300 rounded"></div>
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
+              <div className="w-20 h-5 bg-gray-300 rounded"></div>
+            </div>
+          </div>
+          <div className="w-28 h-5 bg-gray-300 rounded mb-2"></div>
+          <div className="w-24 h-5 bg-gray-300 rounded"></div>
         </div>
-        <div className="flex justify-center gap-2 mt-8">
-          {Array.from({ length: totalDots }).map((_, index) => (
-            <div
-              key={index}
-              className={`w-2 h-2 rounded-full cursor-pointer transition-colors duration-200 ${
-                activeDot === index ? 'bg-red-500' : 'bg-gray-400'
-              }`}
-              onClick={() => scrollToCard(index)}
-            ></div>
-          ))}
+      ))
+    : displayedMatches.map((match) => (
+        <div
+          key={match.id}
+          className="snap-center flex-shrink-0 w-80 md:w-96 lg:w-1/3 max-w-lg bg-gradient-to-br from-white to-gray-50 p-4 md:p-5 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100"
+        >
+          {/* Match Type & League */}
+          <div className="flex justify-between items-center mb-3">
+            <span className="text-red-600 font-semibold text-xs md:text-sm uppercase truncate">
+              {activeFilter === 'upcoming' ? 'Fixture' : activeFilter === 'live' ? 'Live' : 'Result'}
+            </span>
+            <span className="text-gray-500 text-xs md:text-sm truncate flex-1 text-right ml-2">
+              {match.league?.name || 'League Name'}
+            </span>
+          </div>
+
+          {/* Teams */}
+          <div className="flex items-center justify-between mb-3 space-x-2">
+            <div className="flex items-center space-x-2 min-w-0 flex-1">
+              <img
+                src={match.localteam?.image_path || 'https://via.placeholder.com/40'}
+                alt={match.localteam?.name || 'Team A'}
+                className="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover border-2 border-gray-200 flex-shrink-0"
+              />
+              <span className="text-gray-900 font-semibold text-sm md:text-base truncate">
+                {match.localteam?.name || 'Team A'}
+              </span>
+            </div>
+
+            <img
+              src="/vs.png"
+              alt="vs"
+              className="w-8 h-8 md:w-10 md:h-10 object-contain mx-1 flex-shrink-0 z-10"
+              style={{ minWidth: '2rem' }}
+            />
+
+            <div className="flex items-center space-x-2 min-w-0 flex-1 justify-end">
+              <span className="text-gray-900 font-semibold text-sm md:text-base truncate text-right">
+                {match.visitorteam?.name || 'Team B'}
+              </span>
+              <img
+                src={match.visitorteam?.image_path || 'https://via.placeholder.com/40'}
+                alt={match.visitorteam?.name || 'Team B'}
+                className="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover border-2 border-gray-200 flex-shrink-0"
+              />
+            </div>
+          </div>
+
+          {/* Date & Time */}
+          <div className="text-gray-600 text-xs md:text-sm mb-2 truncate">
+            {match.starting_at
+              ? new Date(match.starting_at).toLocaleString('en-US', {
+                  dateStyle: 'medium',
+                  timeStyle: 'short',
+                  timeZone: 'Asia/Kolkata',
+                })
+              : 'Date TBD'}
+          </div>
+
+          {/* Final Score (only for finished) */}
+          {activeFilter === 'finished' && (
+            <div className="flex justify-between text-gray-800 font-medium text-sm mb-2">
+              <span>
+                {getScoreFromNote(match).localScore} ({match.localteam?.name?.slice(0, 8) + '...' || 'A'})
+              </span>
+              <span>
+                {getScoreFromNote(match).visitorScore} ({match.visitorteam?.name?.slice(0, 8) + '...' || 'B'})
+              </span>
+            </div>
+          )}
+
+          {/* Status */}
+          <div className="text-gray-500 text-xs md:text-sm mb-3 line-clamp-1">
+            {getMatchStatus(match)}
+          </div>
+
+          {/* Link */}
+          <a
+            href={`/match/${match.id}`}
+            className="text-red-600 font-semibold text-xs md:text-sm hover:text-red-800 transition-colors block text-center"
+          >
+            Match Info →
+          </a>
         </div>
+      ))}
+</div>
       </div>
     </section>
   );

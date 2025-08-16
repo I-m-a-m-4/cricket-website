@@ -1,33 +1,33 @@
-import React, { useState, useEffect, useRef, Fragment } from 'react';
+import React, { useState, useEffect, useRef, Fragment } from "react";
 import {
   fetchAllMatches,
   fetchAusIndMatches,
   fetchLegendsLeagueMatches,
   fetchLiveMatches,
   fetchUpcomingMatches,
-} from '../utils/api';
-import MatchCard from '../components/MatchCard';
-import MatchCardSkeleton from '../components/MatchCardSkeleton';
-import { Menu, Transition } from '@headlessui/react';
-import { ChevronDownIcon } from '@heroicons/react/20/solid';
-import MustWatchSection from '../components/MustWatchSection.jsx';
-import LatestNewsSection from '../components/LatestNewsSection.jsx';
-import KeySeriesSection from '../components/KeySeriesSection.jsx';
-import VideosSection from '../components/VideoSection.jsx';
-import TrendingPlayers from '../components/TrendingPlayers.jsx';
-import RankingsSection from '../components/RankingSection.jsx';
-import InDepthSection from '../components/InDepthSection.jsx';
-import MatchesSection from '../components/MatchesSection.jsx';
+} from "../utils/api";
+import MatchCard from "../components/MatchCard";
+import MatchCardSkeleton from "../components/MatchCardSkeleton";
+import { Menu, Transition } from "@headlessui/react";
+import { ChevronDownIcon } from "@heroicons/react/20/solid";
+import MustWatchSection from "../components/MustWatchSection.jsx";
+import LatestNewsSection from "../components/LatestNewsSection.jsx";
+import KeySeriesSection from "../components/KeySeriesSection.jsx";
+import VideosSection from "../components/VideoSection.jsx";
+import TrendingPlayers from "../components/TrendingPlayers.jsx";
+import RankingsSection from "../components/RankingSection.jsx";
+import InDepthSection from "../components/InDepthSection.jsx";
+import MatchesSection from "../components/MatchesSection.jsx";
 
 const filters = [
-  { id: 'all-matches', label: 'All Matches' },
-  { id: 'live', label: 'Live Matches' },
-  { id: 'upcoming', label: 'Upcoming Matches' },
-  { id: 'finished', label: 'Finished Matches' },
+  { id: "all-matches", label: "All Matches" },
+  { id: "live", label: "Live Matches" },
+  { id: "upcoming", label: "Upcoming Matches" },
+  { id: "finished", label: "Finished Matches" },
 ];
 
 function classNames(...classes) {
-  return classes.filter(Boolean).join(' ');
+  return classes.filter(Boolean).join(" ");
 }
 
 function HomePageSkeleton() {
@@ -72,7 +72,7 @@ function HomePageSkeleton() {
                   <div
                     key={index}
                     className={`w-2 h-2 rounded-full ${
-                      index === 0 ? 'bg-red-500' : 'bg-gray-400'
+                      index === 0 ? "bg-red-500" : "bg-gray-400"
                     }`}
                   ></div>
                 ))}
@@ -86,7 +86,7 @@ function HomePageSkeleton() {
 }
 
 function HomePage() {
-  const [activeFilter, setActiveFilter] = useState('all-matches');
+  const [activeFilter, setActiveFilter] = useState("all-matches");
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -100,31 +100,32 @@ function HomePage() {
       try {
         let fetchedMatches = [];
         switch (activeFilter) {
-          case 'live':
+          case "live":
             fetchedMatches = await fetchLiveMatches();
             break;
-          case 'upcoming':
+          case "upcoming":
             fetchedMatches = await fetchUpcomingMatches();
             // Filter out past matches based on current date
             const now = new Date();
-            fetchedMatches = fetchedMatches.filter(match => 
-              match.starting_at && new Date(match.starting_at) > now
+            fetchedMatches = fetchedMatches.filter(
+              (match) => match.starting_at && new Date(match.starting_at) > now
             );
             break;
-          case 'finished':
+          case "finished":
             fetchedMatches = await fetchAllMatches();
             const currentDate = new Date();
-            fetchedMatches = fetchedMatches.filter(match => 
-              match.starting_at && new Date(match.starting_at) <= currentDate
+            fetchedMatches = fetchedMatches.filter(
+              (match) =>
+                match.starting_at && new Date(match.starting_at) <= currentDate
             );
             break;
-          case 'all-matches':
+          case "all-matches":
             fetchedMatches = await fetchAllMatches();
             break;
-          case 'aus-ind':
+          case "aus-ind":
             fetchedMatches = await fetchAusIndMatches();
             break;
-          case 'legends-league':
+          case "legends-league":
             fetchedMatches = await fetchLegendsLeagueMatches();
             break;
           default:
@@ -133,8 +134,8 @@ function HomePage() {
         }
         setMatches(fetchedMatches.slice(0, 6)); // Limit to 6 cards
       } catch (err) {
-        setError('Failed to fetch matches. Please try again.');
-        console.error('Error fetching matches:', err);
+        setError("Failed to fetch matches. Please try again.");
+        console.error("Error fetching matches:", err);
       } finally {
         setLoading(false);
       }
@@ -145,7 +146,9 @@ function HomePage() {
   const handleScroll = () => {
     if (matchCarouselRef.current) {
       const scrollLeft = matchCarouselRef.current.scrollLeft;
-      const cardWidth = matchCarouselRef.current.querySelector('.snap-center')?.offsetWidth || 350;
+      const cardWidth =
+        matchCarouselRef.current.querySelector(".snap-center")?.offsetWidth ||
+        350;
       const newActiveDot = Math.floor(scrollLeft / (cardWidth * 3)) % 3;
       setActiveDot(newActiveDot);
     }
@@ -155,12 +158,14 @@ function HomePage() {
 
   const scrollToCard = (dotIndex) => {
     if (matchCarouselRef.current) {
-      const cardWidth = matchCarouselRef.current.querySelector('.snap-center')?.offsetWidth || 350;
+      const cardWidth =
+        matchCarouselRef.current.querySelector(".snap-center")?.offsetWidth ||
+        350;
       const cardsPerView = 3;
       const scrollPosition = dotIndex * cardsPerView * cardWidth;
       matchCarouselRef.current.scrollTo({
         left: scrollPosition,
-        behavior: 'smooth',
+        behavior: "smooth",
       });
     }
   };
@@ -171,8 +176,14 @@ function HomePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-100 to-white">
-      <meta name="description" content="Explore the latest cricket matches, live scores, upcoming fixtures, and more on our homepage. Stay updated with real-time commentary and highlights." />
-      <meta name="keywords" content="cricket, live matches, upcoming matches, cricket scores, cricket highlights" />
+      <meta
+        name="description"
+        content="Explore the latest cricket matches, live scores, upcoming fixtures, and more on our homepage. Stay updated with real-time commentary and highlights."
+      />
+      <meta
+        name="keywords"
+        content="cricket, live matches, upcoming matches, cricket scores, cricket highlights"
+      />
       <meta name="robots" content="index, follow" />
       <title>Cricket Hub - Live Scores & Matches</title>
       <div className="relative overflow-hidden">
@@ -191,8 +202,8 @@ function HomePage() {
                   onClick={() => setActiveFilter(filter.id)}
                   className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 whitespace-nowrap ${
                     activeFilter === filter.id
-                      ? 'bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-lg'
-                      : 'bg-white/10 text-white hover:bg-white/20'
+                      ? "bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-lg"
+                      : "bg-white/10 text-white hover:bg-white/20"
                   }`}
                 >
                   {filter.label}
@@ -203,8 +214,12 @@ function HomePage() {
               <Menu as="div" className="relative inline-block text-left w-full">
                 <div>
                   <Menu.Button className="inline-flex w-full justify-between items-center rounded-md bg-gradient-to-r from-red-500 to-orange-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-600">
-                    {filters.find((f) => f.id === activeFilter)?.label || 'Select a filter'}
-                    <ChevronDownIcon className="-mr-1 ml-2 h-5 w-5" aria-hidden="true" />
+                    {filters.find((f) => f.id === activeFilter)?.label ||
+                      "Select a filter"}
+                    <ChevronDownIcon
+                      className="-mr-1 ml-2 h-5 w-5"
+                      aria-hidden="true"
+                    />
                   </Menu.Button>
                 </div>
                 <Transition
@@ -224,8 +239,10 @@ function HomePage() {
                             <button
                               onClick={() => setActiveFilter(filter.id)}
                               className={classNames(
-                                active ? 'bg-gray-700 text-white' : 'text-gray-300',
-                                'block px-4 py-2 text-sm w-full text-left'
+                                active
+                                  ? "bg-gray-700 text-white"
+                                  : "text-gray-300",
+                                "block px-4 py-2 text-sm w-full text-left"
                               )}
                             >
                               {filter.label}
@@ -248,11 +265,14 @@ function HomePage() {
                 <div
                   ref={matchCarouselRef}
                   onScroll={handleScroll}
-                  className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory"
-                  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                  className="flex gap-4 md:gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scroll-smooth"
+                  style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
                 >
                   {matches.map((match, index) => (
-                    <div key={match.id || index} className="snap-center flex-shrink-0 w-full md:w-1/3">
+                    <div
+                      key={match.id || index}
+                      className="snap-center flex-shrink-0 w-80 md:w-96 lg:w-1/3 max-w-lg"
+                    >
                       <MatchCard match={match} activeFilter={activeFilter} />
                     </div>
                   ))}
@@ -262,7 +282,7 @@ function HomePage() {
                     <div
                       key={index}
                       className={`w-2 h-2 rounded-full cursor-pointer transition-colors duration-200 ${
-                        activeDot === index ? 'bg-red-500' : 'bg-gray-400'
+                        activeDot === index ? "bg-red-500" : "bg-gray-400"
                       }`}
                       onClick={() => scrollToCard(index)}
                     ></div>
@@ -272,7 +292,9 @@ function HomePage() {
             )}
             {!error && matches.length === 0 && (
               <div className="text-center py-8">
-                <p className="text-gray-400 text-lg">No matches found for the selected category.</p>
+                <p className="text-gray-400 text-lg">
+                  No matches found for the selected category.
+                </p>
               </div>
             )}
           </div>

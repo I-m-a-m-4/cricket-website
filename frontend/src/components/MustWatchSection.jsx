@@ -289,9 +289,7 @@ const MustWatchSection = () => {
       <section className="bg-white rounded-xl max-w-6xl w-full p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 sm:gap-0">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Must Watch</h2>
-          <a href="#" className="text-red-600 font-semibold hover:text-red-700 transition-colors text-sm">
-            See All
-          </a>
+          
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8 items-start">

@@ -214,7 +214,15 @@ export const fetchTopPlayers = async () => {
 };
 
 // src/api.js
-
+export const fetchICCRankings = async (format) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/rankings/icc/${format}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching ICC rankings:", error);
+    return [];
+  }
+};
 export const fetchCricketNews = async () => {
   try {
     const API_KEY = import.meta.env.VITE_NEWSAPI_KEY || 'pub_acedfd3cbe3f45e2a55183787d8359de';
