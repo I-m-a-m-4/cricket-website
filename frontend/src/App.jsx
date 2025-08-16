@@ -6,29 +6,53 @@ import TeamPage from "./pages/TeamPage.jsx";
 import FixturesPage from "./pages/FixturesPage.jsx";
 import Navbar from "./components/Navbar.jsx";
 import Footer from "./components/Footer.jsx";
+import NewsPage from "./pages/NewsPage.jsx";
+import NotFoundPage from "./pages/NotFoundPage.jsx";
+import LeaguesPage from "./pages/LeaguesPage.jsx"; // Import the new page
+import { ErrorBoundary } from "react-error-boundary";
 
 const CricketPage = () => <div>Cricket Page Content</div>;
 const RankingPage = () => <div>Ranking Page Content</div>;
 const LiveMatchPage = () => <div>Live Match Page Content</div>;
 const ContactPage = () => <div>Contact Page Content</div>;
 
+function ErrorFallback({ error, resetErrorBoundary }) {
+  return (
+    <div className="max-w-7xl mx-auto px-4 py-12 text-center">
+      <h1 className="text-3xl font-bold text-red-600">Something Went Wrong</h1>
+      <p className="text-gray-700 mt-4">{error.message}</p>
+      <button
+        onClick={resetErrorBoundary}
+        className="mt-6 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+      >
+        Try Again
+      </button>
+    </div>
+  );
+}
+
 function App() {
   return (
     <BrowserRouter>
-      <Navbar />
-      <Routes>
-        <Route path="/" element={<Navigate to="/home" replace />} />
-        <Route path="/home" element={<HomePage />} />
-        <Route path="/match/:id" element={<MatchPage />} />
-        <Route path="/standings" element={<StandingsPage />} />
-        <Route path="/team/:id" element={<TeamPage />} />
-        <Route path="/cricket" element={<CricketPage />} />
-        <Route path="/ranking" element={<RankingPage />} />
-        <Route path="/live-match" element={<LiveMatchPage />} />
-        <Route path="/contact" element={<ContactPage />} />
-        <Route path="/fixtures" element={<FixturesPage />} />
-      </Routes>
-      <Footer />
+      <ErrorBoundary FallbackComponent={ErrorFallback} onReset={() => window.location.reload()}>
+        <Navbar />
+        <Routes>
+          <Route path="/" element={<Navigate to="/home" replace />} />
+          <Route path="/home" element={<HomePage />} />
+          <Route path="/match/:id" element={<MatchPage />} />
+          <Route path="/standings" element={<StandingsPage />} />
+          <Route path="/team/:id" element={<TeamPage />} />
+          <Route path="/cricket" element={<CricketPage />} />
+          <Route path="/ranking" element={<RankingPage />} />
+          <Route path="/live-match" element={<LiveMatchPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/fixtures" element={<FixturesPage />} />
+          <Route path="/news/:id" element={<NewsPage />} />
+          <Route path="/leagues" element={<LeaguesPage />} /> {/* Add the new route */}
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+        <Footer />
+      </ErrorBoundary>
     </BrowserRouter>
   );
 }

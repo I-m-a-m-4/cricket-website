@@ -25,28 +25,29 @@ export default function LatestNewsSection() {
     return (
       <section className="bg-white py-12">
         <div className="container mx-auto px-6 text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-red-500 border-t-transparent mx-auto"></div>
         </div>
       </section>
     );
   }
 
   if (news.length === 0) {
-    return null;
+    return (
+      <section className="max-w-7xl mx-auto px-4 py-12 text-center">
+        <p className="text-gray-600">No news articles available at the moment.</p>
+      </section>
+    );
   }
 
   const mainArticle = news[0];
   const sideArticles = news.slice(1, 5);
 
-  // Fallback link construction
   const getArticleLink = (article) => {
-    // Assume match_id is available if it's a match-related article
-    return article.match_id ? `/match/${article.match_id}` : `/news/${article.id || "default"}`;
+    return article.link || `/news/${article.id || "default"}`;
   };
 
   return (
     <section className="max-w-7xl mx-auto px-4 py-12">
-      {/* Title */}
       <div className="text-center mb-10">
         <h2 className="text-4xl font-bold mb-2" style={{ fontFamily: "'Open Sans', sans-serif" }}>Latest News</h2>
         <p className="text-gray-500 max-w-2xl mx-auto">
@@ -54,15 +55,13 @@ export default function LatestNewsSection() {
         </p>
       </div>
 
-      {/* News Grid */}
       <div className="grid md:grid-cols-3 gap-6">
-        {/* Main article */}
         <Link
           to={getArticleLink(mainArticle) || "/"}
           className="relative rounded-xl overflow-hidden md:col-span-1 md:row-span-2 shadow-lg group"
         >
           <img
-            src={mainArticle.image}
+            src={mainArticle.image || "https://via.placeholder.com/600x400?text=Cricket+News"}
             alt={mainArticle.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
@@ -71,13 +70,11 @@ export default function LatestNewsSection() {
             <h3 className="text-xl font-bold">{mainArticle.title}</h3>
             <div className="flex items-center text-sm text-gray-300 mt-2">
               <FaRegCalendarAlt className="mr-2" />
-              {/* Use current date as a fallback */}
-              {new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+              {new Date(mainArticle.created_at).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
             </div>
           </div>
         </Link>
 
-        {/* Side articles */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 col-span-2">
           {sideArticles.map((article) => (
             <Link
@@ -87,12 +84,12 @@ export default function LatestNewsSection() {
             >
               <div className="relative">
                 <img
-                  src={article.image}
+                  src={article.image || "https://via.placeholder.com/300x200?text=Cricket+News"}
                   alt={article.title}
                   className="w-full h-32 object-cover rounded-t-xl"
                 />
                 <div className="absolute top-2 left-2 bg-gray-900/60 text-white text-xs font-bold px-2 py-1 rounded-full">
-                  {article.season?.name || "News"}
+                  {article.category || "News"}
                 </div>
               </div>
               <div className="p-4 flex flex-col">
@@ -102,7 +99,7 @@ export default function LatestNewsSection() {
                 </p>
                 <div className="flex items-center text-xs text-gray-400 mt-3">
                   <FaRegCalendarAlt className="mr-2" />
-                  {new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+                  {new Date(article.created_at).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
                 </div>
               </div>
             </Link>

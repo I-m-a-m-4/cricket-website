@@ -1,11 +1,10 @@
-// src/components/KeySeriesSection.js
-
 import React, { useState, useEffect } from 'react';
 import { fetchLeagues } from '../utils/api';
 
 export default function KeySeriesSection() {
     const [leagues, setLeagues] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [activeLeagueId, setActiveLeagueId] = useState(null); // Track the active button by league ID
 
     useEffect(() => {
         const getLeagues = async () => {
@@ -37,6 +36,11 @@ export default function KeySeriesSection() {
     const featuredLeague = leagues[0];
     const otherLeagues = leagues.slice(1);
 
+    // Handle button click to set the active league
+    const handleButtonClick = (leagueId) => {
+        setActiveLeagueId(leagueId === activeLeagueId ? null : leagueId); // Toggle active state
+    };
+
     return (
         <section className="relative py-20 px-4 text-white">
             <div 
@@ -52,14 +56,29 @@ export default function KeySeriesSection() {
                 </p>
 
                 <div className="flex flex-wrap justify-center gap-4">
-                    {/* Featured button with red gradient */}
-                    <button className="bg-gradient-to-r from-[#DD242D] to-[#FF4535] text-white font-bold py-2 px-6 rounded-full shadow-md hover:scale-105 transition-transform duration-300">
+                    {/* Featured button with red gradient when active */}
+                    <button
+                        onClick={() => handleButtonClick(featuredLeague.id)}
+                        className={`font-bold py-2 px-6 rounded-full shadow-md hover:scale-105 transition-transform duration-300 ${
+                            activeLeagueId === featuredLeague.id
+                                ? 'bg-gradient-to-r from-[#DD242D] to-[#FF4535] text-white'
+                                : 'bg-gradient-to-r from-[#DD242D] to-[#FF4535] text-white'
+                        }`}
+                    >
                         {featuredLeague.name}
                     </button>
                     
                     {/* Other series buttons */}
                     {otherLeagues.map((league) => (
-                        <button key={league.id} className="bg-white text-gray-800 font-bold py-2 px-6 rounded-full shadow-md hover:bg-gray-200 transition-colors duration-300">
+                        <button
+                            key={league.id}
+                            onClick={() => handleButtonClick(league.id)}
+                            className={`font-bold py-2 px-6 rounded-full shadow-md hover:bg-gray-200 transition-colors duration-300 ${
+                                activeLeagueId === league.id
+                                    ? 'bg-red-500 text-white'
+                                    : 'bg-white text-gray-800'
+                            }`}
+                        >
                             {league.name}
                         </button>
                     ))}

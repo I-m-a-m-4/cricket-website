@@ -1,36 +1,54 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-function MatchCard({ match }) {
-  // Determine match type based on status or other properties
+function MatchCard({ match, activeFilter }) {
+  // Determine match type based on activeFilter with fallback to match data
   const getMatchType = () => {
-    // Check for a variety of possible live and upcoming status strings
-    if (match.status === 'Live' || match.status_id === 2 || match.note?.toLowerCase().includes('live')) {
-      return 'LIVE';
-    } else if (match.status === 'Fixture' || match.status_id === 1 || match.time?.status === 'Scheduled') {
-      return 'UPCOMING';
-    } else {
-      return 'RESULT';
+    switch (activeFilter) {
+      case 'live':
+        return 'LIVE';
+      case 'upcoming':
+        return 'UPCOMING';
+      case 'finished':
+        return 'FINISHED';
+      case 'all-matches':
+      default:
+        // Fallback to match data if no specific filter applies
+        if (match.status === 'Live' || match.status_id === 2 || match.note?.toLowerCase().includes('live')) {
+          return 'LIVE';
+        } else if (match.status === 'Fixture' || match.status_id === 1 || match.time?.status === 'Scheduled') {
+          return 'UPCOMING';
+        } else {
+          return 'FINISHED';
+        }
     }
   };
 
   const matchType = getMatchType();
 
   const getStatusColor = (type) => {
-    switch(type) {
-      case 'RESULT': return 'text-gray-600';
-      case 'LIVE': return 'text-red-500';
-      case 'UPCOMING': return 'text-blue-500';
-      default: return 'text-gray-600';
+    switch (type) {
+      case 'LIVE':
+        return 'text-red-500';
+      case 'UPCOMING':
+        return 'text-blue-500';
+      case 'FINISHED':
+        return 'text-gray-600';
+      default:
+        return 'text-gray-600';
     }
   };
 
   const getStatusBg = (type) => {
-    switch(type) {
-      case 'RESULT': return 'bg-gray-100';
-      case 'LIVE': return 'bg-red-50';
-      case 'UPCOMING': return 'bg-blue-50';
-      default: return 'bg-gray-100';
+    switch (type) {
+      case 'LIVE':
+        return 'bg-red-50';
+      case 'UPCOMING':
+        return 'bg-blue-50';
+      case 'FINISHED':
+        return 'bg-gray-100';
+      default:
+        return 'bg-gray-100';
     }
   };
 

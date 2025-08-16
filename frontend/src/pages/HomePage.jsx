@@ -105,9 +105,18 @@ function HomePage() {
             break;
           case 'upcoming':
             fetchedMatches = await fetchUpcomingMatches();
+            // Filter out past matches based on current date
+            const now = new Date();
+            fetchedMatches = fetchedMatches.filter(match => 
+              match.starting_at && new Date(match.starting_at) > now
+            );
             break;
           case 'finished':
             fetchedMatches = await fetchAllMatches();
+            const currentDate = new Date();
+            fetchedMatches = fetchedMatches.filter(match => 
+              match.starting_at && new Date(match.starting_at) <= currentDate
+            );
             break;
           case 'all-matches':
             fetchedMatches = await fetchAllMatches();
@@ -244,7 +253,7 @@ function HomePage() {
                 >
                   {matches.map((match, index) => (
                     <div key={match.id || index} className="snap-center flex-shrink-0 w-full md:w-1/3">
-                      <MatchCard match={match} />
+                      <MatchCard match={match} activeFilter={activeFilter} />
                     </div>
                   ))}
                 </div>

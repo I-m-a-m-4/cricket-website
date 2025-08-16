@@ -45,7 +45,7 @@ function MatchesSection({ limit = 6 }) {
         if (!isMounted) return;
 
         if (data && Array.isArray(data) && data.length > 0) {
-          setMatches(data.slice(0, limit)); // Limit to 6 cards maximum
+          setMatches(data.slice(0, limit));
         } else {
           setMatches([]);
         }
@@ -67,12 +67,12 @@ function MatchesSection({ limit = 6 }) {
     if (matchCarouselRef.current) {
       const scrollLeft = matchCarouselRef.current.scrollLeft;
       const cardWidth = matchCarouselRef.current.querySelector('.snap-center')?.offsetWidth || 350;
-      const newActiveDot = Math.floor(scrollLeft / (cardWidth * 3)) % 2; // 2 dots for 6 cards max
+      const newActiveDot = Math.floor(scrollLeft / (cardWidth * 3)) % 2;
       setActiveDot(newActiveDot);
     }
   };
 
-  const totalDots = 2; // 2 sets of 3 cards (6 total)
+  const totalDots = 2;
 
   const scrollToCard = (dotIndex) => {
     if (matchCarouselRef.current) {
@@ -86,52 +86,13 @@ function MatchesSection({ limit = 6 }) {
     }
   };
 
-  if (loading) {
-    return (
-      <section className="bg-gradient-to-b from-gray-100 to-white py-8">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center mb-6">
-            <div className="flex space-x-4">
-              <h2 className="text-3xl font-bold text-gray-800">Matches</h2>
-              <div className="px-6 py-2 rounded-md text-sm font-medium bg-gray-700/50 w-32 h-10 animate-pulse"></div>
-            </div>
-            <div className="w-20 h-6 bg-gray-300 rounded animate-pulse"></div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[...Array(3)].map((_, index) => (
-              <div key={index} className="bg-white p-4 rounded-xl shadow-lg animate-pulse">
-                <div className="flex justify-between mb-3">
-                  <div className="w-16 h-5 bg-gray-300 rounded"></div>
-                  <div className="w-24 h-5 bg-gray-300 rounded"></div>
-                </div>
-                <div className="flex justify-between mb-3">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
-                    <div className="w-20 h-5 bg-gray-300 rounded"></div>
-                  </div>
-                  <div className="w-12 h-12 bg-gray-300 rounded"></div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
-                    <div className="w-20 h-5 bg-gray-300 rounded"></div>
-                  </div>
-                </div>
-                <div className="w-28 h-5 bg-gray-300 rounded mb-2"></div>
-                <div className="w-24 h-5 bg-gray-300 rounded"></div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-    );
-  }
-
   if (error) return <div className="text-center py-8 text-red-600 font-semibold">{error}</div>;
 
-  if (matches.length === 0) {
+  if (matches.length === 0 && !loading) {
     return <div className="text-center py-8 text-gray-500 font-medium">No matches available at the moment.</div>;
   }
 
-  const displayedMatches = matches; // Limit already applied in useEffect
+  const displayedMatches = matches;
 
   return (
     <section className="bg-gradient-to-b from-gray-100 to-white py-8">
@@ -205,53 +166,75 @@ function MatchesSection({ limit = 6 }) {
           className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
-          {displayedMatches.map((match) => (
-            <div
-              key={match.id}
-              className="snap-center flex-shrink-0 w-full md:w-1/3 bg-gradient-to-br from-white to-gray-50 p-5 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100"
-            >
-              <div className="flex justify-between items-center mb-4">
-                <span className="text-red-600 font-semibold text-sm uppercase">
-                  {activeFilter === 'upcoming' ? 'Fixture' : activeFilter === 'live' ? 'Live' : 'Result'}
-                </span>
-                <span className="text-gray-500 text-sm">{match.league?.name || 'League Name'}</span>
-              </div>
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-3">
-                  <img
-                    src={match.localteam?.image_path || 'https://via.placeholder.com/40'}
-                    alt={match.localteam?.name || 'Team A'}
-                    className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
-                  />
-                  <span className="text-gray-900 font-semibold text-lg">{match.localteam?.name || 'Team A'}</span>
+          {loading
+            ? [...Array(3)].map((_, index) => (
+                <div key={index} className="snap-center flex-shrink-0 w-full md:w-1/3 bg-white p-4 rounded-xl shadow-lg animate-pulse">
+                  <div className="flex justify-between mb-3">
+                    <div className="w-16 h-5 bg-gray-300 rounded"></div>
+                    <div className="w-24 h-5 bg-gray-300 rounded"></div>
+                  </div>
+                  <div className="flex justify-between mb-3">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
+                      <div className="w-20 h-5 bg-gray-300 rounded"></div>
+                    </div>
+                    <div className="w-12 h-12 bg-gray-300 rounded"></div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
+                      <div className="w-20 h-5 bg-gray-300 rounded"></div>
+                    </div>
+                  </div>
+                  <div className="w-28 h-5 bg-gray-300 rounded mb-2"></div>
+                  <div className="w-24 h-5 bg-gray-300 rounded"></div>
                 </div>
-                <img src="/vs.png" alt="vs" className="w-12 h-12 object-contain mx-2" />
-                <div className="flex items-center space-x-3">
-                  <img
-                    src={match.visitorteam?.image_path || 'https://via.placeholder.com/40'}
-                    alt={match.visitorteam?.name || 'Team B'}
-                    className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
-                  />
-                  <span className="text-gray-900 font-semibold text-lg">{match.visitorteam?.name || 'Team B'}</span>
+              ))
+            : displayedMatches.map((match) => (
+                <div
+                  key={match.id}
+                  className="snap-center flex-shrink-0 w-full md:w-1/3 bg-gradient-to-br from-white to-gray-50 p-5 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100"
+                >
+                  <div className="flex justify-between items-center mb-4">
+                    <span className="text-red-600 font-semibold text-sm uppercase">
+                      {activeFilter === 'upcoming' ? 'Fixture' : activeFilter === 'live' ? 'Live' : 'Result'}
+                    </span>
+                    <span className="text-gray-500 text-sm">{match.league?.name || 'League Name'}</span>
+                  </div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-3">
+                      <img
+                        src={match.localteam?.image_path || 'https://via.placeholder.com/40'}
+                        alt={match.localteam?.name || 'Team A'}
+                        className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
+                      />
+                      <span className="text-gray-900 font-semibold text-lg">{match.localteam?.name || 'Team A'}</span>
+                    </div>
+                    <img src="/vs.png" alt="vs" className="w-12 h-12 object-contain mx-2" />
+                    <div className="flex items-center space-x-3">
+                      <img
+                        src={match.visitorteam?.image_path || 'https://via.placeholder.com/40'}
+                        alt={match.visitorteam?.name || 'Team B'}
+                        className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
+                      />
+                      <span className="text-gray-900 font-semibold text-lg">{match.visitorteam?.name || 'Team B'}</span>
+                    </div>
+                  </div>
+                  <div className="text-gray-600 text-sm mb-3">
+                    {match.starting_at
+                      ? new Date(match.starting_at).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata' })
+                      : 'Date TBD'}
+                  </div>
+                  {activeFilter === 'finished' && (
+                    <div className="flex justify-between text-gray-800 font-medium mb-3">
+                      <span>{getScoreFromNote(match).localScore} ({match.localteam?.name || 'Team A'})</span>
+                      <span>{getScoreFromNote(match).visitorScore} ({match.visitorteam?.name || 'Team B'})</span>
+                    </div>
+                  )}
+                  <div className="text-gray-500 text-sm mb-4">{getMatchStatus(match)}</div>
+                  <a href={`/match/${match.id}`} className="text-red-600 font-semibold text-sm hover:text-red-800 transition-colors">
+                    Match Info →
+                  </a>
                 </div>
-              </div>
-              <div className="text-gray-600 text-sm mb-3">
-                {match.starting_at
-                  ? new Date(match.starting_at).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata' })
-                  : 'Date TBD'}
-              </div>
-              {activeFilter === 'finished' && (
-                <div className="flex justify-between text-gray-800 font-medium mb-3">
-                  <span>{getScoreFromNote(match).localScore} ({match.localteam?.name || 'Team A'})</span>
-                  <span>{getScoreFromNote(match).visitorScore} ({match.visitorteam?.name || 'Team B'})</span>
-                </div>
-              )}
-              <div className="text-gray-500 text-sm mb-4">{getMatchStatus(match)}</div>
-              <a href={`/match/${match.id}`} className="text-red-600 font-semibold text-sm hover:text-red-800 transition-colors">
-                Match Info →
-              </a>
-            </div>
-          ))}
+              ))}
         </div>
         <div className="flex justify-center gap-2 mt-8">
           {Array.from({ length: totalDots }).map((_, index) => (
@@ -269,8 +252,6 @@ function MatchesSection({ limit = 6 }) {
   );
 }
 
-export default MatchesSection;
-
 function getMatchStatus(match) {
   const now = new Date();
   const matchDate = new Date(match.starting_at);
@@ -286,3 +267,4 @@ function getScoreFromNote(match) {
     : ['N/A', 'N/A'];
   return { localScore, visitorScore };
 }
+export default MatchesSection;

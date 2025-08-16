@@ -2,17 +2,12 @@ import axios from 'axios';
 
 // Get the base URL from the environment variables.
 let BASE_URL;
-const API_TOKEN = import.meta.env.VITE_SPORTMONKS_API_TOKEN;
-
-// Correctly set the BASE_URL based on the environment.
-// This is the most reliable way to handle environment variables with Vite.
 if (import.meta.env.MODE === 'production') {
     BASE_URL = import.meta.env.VITE_RENDER_URL;
     if (!BASE_URL || !BASE_URL.startsWith('https://')) {
         console.error("Critical Error: VITE_RENDER_URL environment variable is not defined or is invalid in production.");
     }
 } else {
-    // If we're in development, use the local API
     BASE_URL = 'http://localhost:3001/api';
 }
 
@@ -29,14 +24,14 @@ export const fetchAllMatches = async () => {
 export const fetchTeamRankings = async (type, gender) => {
     try {
         const response = await axios.get(`${BASE_URL}/team-rankings/global`, {
-            params: {
-                type,
-                gender
-            }
+            params: { type, gender }
         });
-        // Find the ranking object matching the requested type and gender, then return its team array
+        console.log('Fetched Team Rankings:', response.data);
         const ranking = response.data.find(r => r.type === type.toUpperCase() && r.gender === gender.toLowerCase());
-        return ranking ? ranking.team.slice(0, 5) : []; // Return top 5 teams or empty array if not found
+        return ranking ? ranking.teams.map(team => ({
+            ...team,
+            rating: ranking.rating || ranking.points || ranking.score || 'N/A'
+        })).slice(0, 5) : [];
     } catch (error) {
         console.error('Error fetching team rankings:', error);
         throw error;
@@ -74,29 +69,54 @@ export const fetchLiveMatches = async () => {
 };
 
 export const fetchUpcomingMatches = async () => {
-  try {
-    const today = new Date().toISOString().split('T')[0];
-    const nextWeek = new Date(new Date().setDate(new Date().getDate() + 7)).toISOString().split('T')[0];
-    const response = await axios.get(`${BASE_URL}/fixtures`, {
-      params: {
-        filter: `starts_between:${today},${nextWeek}`,
-        include: 'localteam,visitorteam,league',
-      },
-    });
-    return response.data;
-  } catch (error) {
-    console.error('API Error:', error.message);
-    throw error;
-  }
-};
-export const fetchNews = async () => {
     try {
-        const response = await axios.get(`${BASE_URL}/news`);
+        const today = new Date().toISOString().split('T')[0];
+        const nextWeek = new Date(new Date().setDate(new Date().getDate() + 7)).toISOString().split('T')[0];
+        const response = await axios.get(`${BASE_URL}/fixtures`, {
+            params: { filter: `starts_between:${today},${nextWeek};status:Fixture`, include: 'localteam,visitorteam,league' },
+        });
         return response.data;
     } catch (error) {
-        console.error("Error fetching news:", error);
-        return [];
+        console.error('API Error:', error.message);
+        throw error;
     }
+};
+
+export const fetchNews = async (maxRetries = 3) => {
+    let retries = 0;
+    while (retries < maxRetries) {
+        try {
+            const startTime = performance.now();
+            const response = await axios.get(`${BASE_URL}/news`, {
+                timeout: 10000
+            });
+            const endTime = performance.now();
+            console.log(`API call took ${Math.round(endTime - startTime)}ms`);
+            console.log('Raw Response from /api/news:', response.data);
+
+            if (!response.data || !Array.isArray(response.data)) {
+                console.warn('Unexpected response structure or empty data:', response.data);
+                return [];
+            }
+            return response.data;
+        } catch (error) {
+            console.error("Error fetching news:", error.message, error.code, error.config?.url);
+            if (error.response && error.response.status === 429) {
+                const waitTime = Math.pow(2, retries) * 1000; // Exponential backoff: 1s, 2s, 4s
+                console.warn(`Rate limit exceeded. Retrying in ${waitTime}ms... (Attempt ${retries + 1}/${maxRetries})`);
+                await new Promise(resolve => setTimeout(resolve, waitTime));
+                retries++;
+                continue;
+            } else if (error.code === 'ERR_NETWORK' || error.code === 'ERR_BLOCKED_BY_CLIENT') {
+                console.warn("Network error detected. Ensure the server is running.");
+            } else if (error.code === 'ECONNABORTED') {
+                console.warn('Request timed out. Check network or server.');
+            }
+            return [];
+        }
+    }
+    console.warn('Max retries reached. Unable to fetch news.');
+    return [];
 };
 
 export const fetchStandings = async (seasonId) => {
@@ -109,29 +129,85 @@ export const fetchStandings = async (seasonId) => {
     }
 };
 
+export const fetchSeasons = async (maxRetries = 3) => {
+    let retries = 0;
+    const BASE_URL = import.meta.env.MODE === 'production' ? import.meta.env.VITE_RENDER_URL : 'http://localhost:3001/api';
+    while (retries < maxRetries) {
+        try {
+            const startTime = performance.now();
+            const response = await axios.get(`${BASE_URL}/seasons`, {
+                params: {
+                    api_token: import.meta.env.VITE_SPORTMONKS_API_TOKEN,
+                    include: 'league', // Adjusted to match backend
+                    sort: 'league_id,name'
+                },
+                timeout: 10000
+            });
+            const endTime = performance.now();
+            console.log(`API call took ${Math.round(endTime - startTime)}ms`);
+            console.log('Raw Response from /seasons:', response.data);
+
+            if (!response.data || !Array.isArray(response.data.data)) {
+                console.warn('Unexpected response structure or empty data:', response.data);
+                return [];
+            }
+            return response.data.data;
+        } catch (error) {
+            console.error("Error fetching seasons:", error.message, error.code, error.config?.url);
+            if (error.response && error.response.status === 429) {
+                const waitTime = Math.pow(2, retries) * 1000;
+                console.warn(`Rate limit exceeded. Retrying in ${waitTime}ms... (Attempt ${retries + 1}/${maxRetries})`);
+                await new Promise(resolve => setTimeout(resolve, waitTime));
+                retries++;
+                continue;
+            } else if (error.code === 'ERR_NETWORK' || error.code === 'ERR_BLOCKED_BY_CLIENT') {
+                console.warn("Network error detected. Ensure the server is running.");
+            } else if (error.code === 'ECONNABORTED') {
+                console.warn('Request timed out. Check network or server.');
+            }
+            return [];
+        }
+    }
+    console.warn('Max retries reached. Unable to fetch seasons.');
+    return [];
+};
+
 export const fetchTopPlayers = async () => {
     try {
-        const response = await axios.get(`${BASE_URL}/players/top`);
-        return response.data;
+        const startTime = performance.now();
+        const response = await axios.get(`${BASE_URL}/players/top`, {
+            timeout: 15000
+        });
+        const endTime = performance.now();
+        console.log(`API call took ${Math.round(endTime - startTime)}ms`);
+        console.log('Raw Response:', response.data);
+
+        if (!response.data || !Array.isArray(response.data.data)) {
+            console.warn('Unexpected response structure or empty data:', response.data);
+            return [];
+        }
+        return response.data.data;
     } catch (error) {
-        console.error("Error fetching top players:", error);
+        console.error("Error fetching top players:", error.message, error.code, error.config?.url);
+        if (error.code === 'ERR_NETWORK' || error.code === 'ERR_BLOCKED_BY_CLIENT') {
+            console.warn("Network error detected. Ensure the backend URL is correct and accessible.");
+        } else if (error.code === 'ECONNABORTED') {
+            console.warn('Request timed out. Check backend availability.');
+        }
         return [];
     }
 };
 
 export const fetchPastMatches = async () => {
-  try {
-    const response = await axios.get(`${BASE_URL}/fixtures`, {
-      params: {
-        'filter[status]': 'Finished',
-        include: 'localteam,visitorteam,league',
-      },
-    });
-    return response.data;
-  } catch (error) {
-    console.error('API Error:', error.message);
-    throw error;
-  }
+    try {
+        const response = await axios.get(`${BASE_URL}/fixtures`, {
+            params: { 'filter[status]': 'Finished', include: 'localteam,visitorteam,league' },
+        });
+        return response.data;
+    } catch (error) {
+        console.error('API Error:', error.message);
+        throw error;
+    }
 };
 
 export const fetchTeams = async () => {
@@ -154,7 +230,6 @@ export const fetchLeagues = async () => {
     }
 };
 
-
 export const fetchVideos = async () => {
     try {
         const response = await axios.get(`${BASE_URL}/videos`);
@@ -166,23 +241,18 @@ export const fetchVideos = async () => {
 };
 
 export const fetchFixtures = async () => {
-  if (!API_TOKEN) {
-    throw new Error('API_TOKEN is not defined. Please set REACT_APP_SPORTMONKS_API_TOKEN in your .env file.');
-  }
-
-  try {
-    const today = new Date().toISOString().split('T')[0]; // e.g., 2025-08-15
-    const nextWeek = new Date(new Date().setDate(new Date().getDate() + 7)).toISOString().split('T')[0]; // e.g., 2025-08-22
-    const response = await axios.get(`${BASE_URL}/fixtures`, {
-      params: {
-        api_token: API_TOKEN,
-        filter: `starts_between=${today},${nextWeek}`,
-        include: 'manofseries,localteam,visitorteam,league',
-      },
-    });
-    return response.data.data; // Sportmonks wraps fixtures in a 'data' array
-  } catch (error) {
-    console.error('Error fetching fixtures:', error.message);
-    throw error;
-  }
+    try {
+        const today = new Date().toISOString().split('T')[0];
+        const nextWeek = new Date(new Date().setDate(new Date().getDate() + 7)).toISOString().split('T')[0];
+        const response = await axios.get(`${BASE_URL}/fixtures`, {
+            params: {
+                filter: `starts_between:${today},${nextWeek}`,
+                include: 'manofseries,localteam,visitorteam,league',
+            },
+        });
+        return response.data.data;
+    } catch (error) {
+        console.error('Error fetching fixtures:', error.message);
+        throw error;
+    }
 };

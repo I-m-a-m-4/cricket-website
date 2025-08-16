@@ -5,13 +5,13 @@ function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Updated navigation links to better fit the app structure and API.
-  const navigationLinks = [
+   const navigationLinks = [
     { name: "Home", path: "/" },
-    { name: "Leagues", path: "/leagues" },
-    { name: "Live Matches", path: "/live-matches" },
-    { name: "Standings", path: "/standings" },
-    { name: "Ranking", path: "/ranking" },
-    { name: "Contact", path: "/contact" },
+    { name: "Live Scores", path: "/live-scores" },
+    { name: "Fixtures & Results", path: "/fixtures-results" },
+    { name: "Rankings", path: "/rankings" },
+    { name: "Teams & Players", path: "/teams-players" },
+    { name: "News & Highlights", path: "/news-highlights" },
   ];
 
   const toggleMobileMenu = () => {
