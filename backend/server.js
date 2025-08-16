@@ -132,7 +132,55 @@ app.get('/api/matches/upcoming', async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch upcoming matches' });
     }
 });
+app.get('/api/seasons', async (req, res) => {
+    const API_BASE_URL = 'https://cricket.sportmonks.com/api/v2.0'; // Hardcoded, no space
+    const API_TOKEN = process.env.SPORTMONKS_API_TOKEN;
 
+    try {
+        const url = new URL(`${API_BASE_URL}/seasons`);
+        url.searchParams.append('api_token', API_TOKEN);
+        url.searchParams.append('include', 'league');
+        url.searchParams.append('sort', 'league_id,name'); // ← No space
+
+        console.log('🎯 Requesting:', url.toString());
+
+        const response = await axios.get(url.toString(), {
+            timeout: 10000
+        });
+
+        if (!response.data || !response.data.data || !Array.isArray(response.data.data)) {
+            return res.status(500).json({
+                error: 'Invalid response from SportMonks',
+                details: 'Missing or malformed data'
+            });
+        }
+
+        res.json(response.data);
+
+    } catch (error) {
+        console.error('❌ Full Error:', error.message);
+
+        if (error.response) {
+            console.error('👉 API Response:', error.response.status, error.response.data);
+            return res.status(error.response.status).json({
+                error: 'SportMonks API error',
+                details: error.response.data.message?.message || 'Unknown error'
+            });
+        }
+
+        if (error.code === 'EPROTO' || error.code === 'ERR_SSL') {
+            return res.status(500).json({
+                error: 'SSL/TLS handshake failed',
+                details: 'Check Node.js version or network firewall'
+            });
+        }
+
+        return res.status(500).json({
+            error: 'Internal server error',
+            details: error.message
+        });
+    }
+});
 // Endpoint to get "news" articles from recent fixtures
 app.get('/api/news', async (req, res) => {
     try {
@@ -144,7 +192,6 @@ app.get('/api/news', async (req, res) => {
                 'sort': '-starting_at'
             }
         });
-
         const articles = response.data.data.slice(0, 6).map(fixture => {
             const winner = fixture.winner_team_id === fixture.localteam?.id 
                 ? fixture.localteam?.name 
@@ -153,7 +200,6 @@ app.get('/api/news', async (req, res) => {
             const visitorTeamScore = fixture.runs.find(run => run.team_id === fixture.visitorteam?.id);
 
             let description = `Match concluded.`;
-
             if (localTeamScore && visitorTeamScore) {
                 description = `${fixture.localteam?.name} scored ${localTeamScore.score}/${localTeamScore.wickets} in ${localTeamScore.overs} overs. ${fixture.visitorteam?.name} scored ${visitorTeamScore.score}/${visitorTeamScore.wickets} in ${visitorTeamScore.overs} overs.`;
             } else if (localTeamScore) {
@@ -161,7 +207,6 @@ app.get('/api/news', async (req, res) => {
             } else if (visitorTeamScore) {
                 description = `${fixture.visitorteam?.name} scored ${visitorTeamScore.score}/${visitorTeamScore.wickets} in ${visitorTeamScore.overs} overs.`;
             }
-
             if (winner && localTeamScore && visitorTeamScore) {
                 description += ` ${winner} won the match.`;
             }
@@ -175,7 +220,6 @@ app.get('/api/news', async (req, res) => {
                 season: fixture.season
             };
         });
-
         res.json(articles);
     } catch (error) {
         console.error('Error fetching news articles:', error.message);
@@ -225,18 +269,16 @@ app.get('/api/fixtures', async (req, res) => {
     const response = await axios.get(`${API_BASE_URL}/fixtures`, {
       params: {
         api_token: process.env.SPORTMONKS_API_TOKEN,
-        filter: `starts_between:${today},${nextWeek}`,
+        filter: `starts_between:${today},${nextWeek};status:Fixture`, // Added status filter
         include: 'localteam,visitorteam,league',
         ...req.query,
       },
-      // httpsAgent: new (require('https').Agent)({ rejectUnauthorized: false }), // Comment out to test
     });
 
     if (!response.data || !Array.isArray(response.data.data)) {
       throw new Error('Invalid response format from API');
     }
 
-    // console.log('Fetched data:', response.data.data); // Remove this line
     res.json(response.data.data);
   } catch (error) {
     console.error('Error fetching fixtures:', error.message);
@@ -270,22 +312,37 @@ app.get('/api/standings/:seasonId', async (req, res) => {
 });
 
 app.get('/api/players/top', async (req, res) => {
-    try {
-        const response = await axios.get(`${API_BASE_URL}/players`, {
-            params: {
-                api_token: API_TOKEN,
-                include: 'teams' // Changed from 'team' to 'teams'
-            }
-        });
-        res.json(response.data.data);
-    } catch (error) {
-        console.error('Error fetching players:', error.message);
-        if (error.response) {
-            console.error('API Response Status:', error.response.status);
-            console.error('API Response Data:', error.response.data);
-        }
-        res.status(500).json({ error: 'Failed to fetch players' });
+  try {
+    const startTime = performance.now();
+    const response = await axios.get(`${API_BASE_URL}/players`, {
+      params: {
+        api_token: API_TOKEN,
+        include: 'teams,position',
+        order: 'updated_at:desc',
+      },
+      timeout: 10000, // Reduce timeout to 10 seconds to fail faster
+    });
+    const endTime = performance.now();
+    console.log(`Sportmonks API call took ${Math.round(endTime - startTime)}ms`);
+    console.log('Raw Players Response:', response.data);
+
+    if (!response.data || !Array.isArray(response.data.data)) {
+      console.warn('Invalid or empty response from Sportmonks:', response.data);
+      return res.json([]);
     }
+    const topPlayers = response.data.data.slice(0, 10);
+    res.json(topPlayers);
+  } catch (error) {
+    console.error('Error fetching players:', error.message, error.code);
+    if (error.code === 'ECONNABORTED') {
+      console.warn('Sportmonks API request timed out. Check API status or rate limits.');
+    }
+    if (error.response) {
+      console.error('API Response Status:', error.response.status);
+      console.error('API Response Data:', error.response.data);
+    }
+    res.status(500).json({ error: 'Failed to fetch players' });
+  }
 });
 // New endpoint to get a list of all teams
 app.get('/api/teams', async (req, res) => {
@@ -327,35 +384,37 @@ app.get('/api/leagues', async (req, res) => {
 });
 
 app.get('/api/team-rankings/global', async (req, res) => {
-    try {
-        const { type, gender } = req.query;
-        const params = {
-            api_token: API_TOKEN,
-            include: 'teams'
-        };
-        if (type) params['filter[type]'] = type.toUpperCase(); // Use 'type' filter
-        if (gender) params['filter[gender]'] = gender.toLowerCase();
+  try {
+    const { type, gender } = req.query;
+    const params = {
+      api_token: API_TOKEN,
+      include: 'teams' // Include team details
+    };
+    if (type) params['filter[type]'] = type.toUpperCase();
+    if (gender) params['filter[gender]'] = gender.toLowerCase();
 
-        const response = await axios.get(`${API_BASE_URL}/team-rankings`, { params });
-        // Filter to match the requested type and gender, then map to include teams
-        const rankings = response.data.data
-            .filter(r => !type || r.type === type.toUpperCase())
-            .filter(r => !gender || r.gender === gender.toLowerCase())
-            .map(ranking => ({
-                ...ranking,
-                teams: ranking.team || []
-            }));
-        res.json(rankings);
-    } catch (error) {
-        console.error('Error fetching global team rankings:', error.message);
-        if (error.response) {
-            console.error('API Response Status:', error.response.status);
-            console.error('API Response Data:', error.response.data);
-        }
-        res.status(500).json({ error: 'Failed to fetch global team rankings' });
+    const response = await axios.get(`${API_BASE_URL}/team-rankings`, { params });
+    console.log('Raw Team Rankings Response:', response.data); // Debug the full response
+
+    const rankings = response.data.data
+      .filter(r => !type || r.type === type.toUpperCase())
+      .filter(r => !gender || r.gender === gender.toLowerCase())
+      .map(ranking => ({
+        ...ranking,
+        teams: ranking.team || [],
+        rating: ranking.rating || ranking.points || ranking.score || 0 // Map potential score fields
+      }));
+
+    res.json(rankings);
+  } catch (error) {
+    console.error('Error fetching global team rankings:', error.message);
+    if (error.response) {
+      console.error('API Response Status:', error.response.status);
+      console.error('API Response Data:', error.response.data);
     }
+    res.status(500).json({ error: 'Failed to fetch global team rankings' });
+  }
 });
-
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
