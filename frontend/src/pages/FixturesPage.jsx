@@ -1,74 +1,22 @@
-import React, { useState, useEffect, useRef, Fragment } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   fetchAllMatches,
   fetchLiveMatches,
   fetchUpcomingMatches,
+  fetchPastMatches,
 } from '../utils/api';
 import MatchCard from '../components/MatchCard';
 import MatchCardSkeleton from '../components/MatchCardSkeleton';
-import { Menu, Transition } from '@headlessui/react';
-import { ChevronDownIcon } from '@heroicons/react/20/solid';
-
-const filters = [
-  { id: 'all-matches', label: 'All Matches' },
-  { id: 'live', label: 'Live Matches' },
-  { id: 'upcoming', label: 'Upcoming Matches' },
-  { id: 'finished', label: 'Finished Matches' },
-];
-
-function classNames(...classes) {
-  return classes.filter(Boolean).join(' ');
-}
 
 function FixturesPageSkeleton() {
   return (
-    <div className="min-h-[50%] relative overflow-hidden">
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url('/hero-bg.png')" }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-800/90 via-slate-900/90 to-blue-900/90"></div>
-      </div>
-      <div className="relative z-10">
-        <div className="container mx-auto px-6 py-8">
-          <div className="hidden md:flex flex-wrap items-center gap-3 mb-8">
-            {Array.from({ length: 4 }).map((_, index) => (
-              <div
-                key={index}
-                className="px-4 py-2 rounded-md text-sm font-medium bg-gray-700/50 w-32 h-10 animate-pulse"
-              ></div>
-            ))}
-          </div>
-          <div className="md:hidden flex justify-center mb-8">
-            <div className="w-full max-w-md">
-              <div className="inline-flex w-full justify-between items-center rounded-md bg-gray-700/50 px-4 py-2.5 text-sm font-medium text-white animate-pulse">
-                <div className="w-2/3 h-5 rounded bg-gray-600/50"></div>
-              </div>
-            </div>
-          </div>
-          <div className="space-y-6">
-            <div className="relative">
-              <div className="overflow-x-hidden pb-4">
-                <div className="flex gap-6">
-                  {Array.from({ length: 6 }).map((_, index) => (
-                    <div key={index} className="flex-shrink-0 w-full md:w-1/3">
-                      <MatchCardSkeleton />
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="flex justify-center gap-2 mt-8">
-                {Array.from({ length: 3 }).map((_, index) => (
-                  <div
-                    key={index}
-                    className={`w-2 h-2 rounded-full ${
-                      index === 0 ? 'bg-red-500' : 'bg-gray-400'
-                    }`}
-                  ></div>
-                ))}
-              </div>
-            </div>
-          </div>
+    <div className="container mx-auto px-6 py-8">
+      <div className="animate-pulse">
+        <div className="h-10 bg-gray-300 rounded mb-8 w-48"></div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <MatchCardSkeleton key={i} />
+          ))}
         </div>
       </div>
     </div>
@@ -76,176 +24,196 @@ function FixturesPageSkeleton() {
 }
 
 function FixturesPage() {
-  const [activeFilter, setActiveFilter] = useState('all-matches');
-  const [matches, setMatches] = useState([]);
+  const [matches, setMatches] = useState({
+    live: [],
+    upcoming: [],
+    finished: [],
+    all: [],
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeDot, setActiveDot] = useState(0);
-  const matchCarouselRef = useRef(null);
 
+  // 🔽 Filters (always declared — Hooks at top level)
+  const [formatFilter, setFormatFilter] = useState('');
+  const [leagueFilter, setLeagueFilter] = useState('');
+  const [teamFilter, setTeamFilter] = useState('');
+
+  // ✅ Always run: extract leagues and teams
+  const leagues = useMemo(() => {
+    const unique = new Set(
+      matches.upcoming
+        .filter((m) => m.status === 'Fixture')
+        .map((m) => m.league?.name)
+        .filter(Boolean)
+    );
+    return [...unique].sort();
+  }, [matches.upcoming]);
+
+  const teams = useMemo(() => {
+    const unique = new Set(
+      matches.upcoming
+        .filter((m) => m.status === 'Fixture')
+        .flatMap((m) => [m.localteam?.name, m.visitorteam?.name])
+        .filter(Boolean)
+    );
+    return [...unique].sort();
+  }, [matches.upcoming]);
+
+  // ✅ Always run: filtered upcoming matches
+  const filteredUpcoming = useMemo(() => {
+    return matches.upcoming
+      .filter((m) => m.status === 'Fixture') // Ensure only upcoming
+      .filter((match) => {
+        return (
+          (!formatFilter || match.type === formatFilter) &&
+          (!leagueFilter || match.league?.name === leagueFilter) &&
+          (!teamFilter ||
+            match.localteam?.name === teamFilter ||
+            match.visitorteam?.name === teamFilter)
+        );
+      });
+  }, [matches.upcoming, formatFilter, leagueFilter, teamFilter]);
+
+  // 🔽 Data fetching
   useEffect(() => {
-    const fetchFilteredMatches = async () => {
+    const fetchAllData = async () => {
       setLoading(true);
       setError(null);
       try {
-        let fetchedMatches = [];
-        switch (activeFilter) {
-          case 'live':
-            fetchedMatches = await fetchLiveMatches();
-            break;
-          case 'upcoming':
-            fetchedMatches = await fetchUpcomingMatches();
-            break;
-          case 'finished':
-            fetchedMatches = await fetchAllMatches();
-            break;
-          case 'all-matches':
-            fetchedMatches = await fetchAllMatches();
-            break;
-          default:
-            fetchedMatches = await fetchAllMatches();
-            break;
-        }
-        setMatches(fetchedMatches);
+        const [live, upcoming, finished, all] = await Promise.all([
+          fetchLiveMatches(),
+          fetchUpcomingMatches(),
+          fetchPastMatches(),
+          fetchAllMatches(),
+        ]);
+
+        // ✅ Ensure all are arrays
+        setMatches({
+          live: Array.isArray(live) ? live : [],
+          upcoming: Array.isArray(upcoming) ? upcoming : [],
+          finished: Array.isArray(finished) ? finished : [],
+          all: Array.isArray(all) ? all : [],
+        });
       } catch (err) {
-        setError('Failed to fetch fixtures. Please try again.');
-        console.error('Error fetching fixtures:', err);
+        setError('Failed to load fixtures.');
+        console.error('Error loading fixtures:', err);
       } finally {
         setLoading(false);
       }
     };
-    fetchFilteredMatches();
-  }, [activeFilter]);
 
-  const handleScroll = () => {
-    if (matchCarouselRef.current) {
-      const scrollLeft = matchCarouselRef.current.scrollLeft;
-      const cardWidth = matchCarouselRef.current.querySelector('.snap-center')?.offsetWidth || 350;
-      const newActiveDot = Math.floor(scrollLeft / (cardWidth * 3)) % 3;
-      setActiveDot(newActiveDot);
+    fetchAllData();
+  }, []);
+
+  // 🔽 Render section (now just a pure function, no Hooks)
+  const renderSection = (title, matchList, id) => {
+    if (!matchList || matchList.length === 0) return null;
+
+    if (id === 'upcoming') {
+      return (
+        <section key={id} className="mb-12">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between mb-6 gap-4">
+            <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
+
+            <div className="flex flex-wrap gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Format</label>
+                <select
+                  value={formatFilter}
+                  onChange={(e) => setFormatFilter(e.target.value)}
+                  className="rounded-md border-gray-300 shadow-sm text-sm focus:border-red-500 focus:ring-red-500"
+                >
+                  <option value="">All Formats</option>
+                  <option value="T20">T20</option>
+                  <option value="ODI">ODI</option>
+                  <option value="Test">Test</option>
+                  <option value="T10">T10</option>
+                  <option value="One-Day">One-Day</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">League</label>
+                <select
+                  value={leagueFilter}
+                  onChange={(e) => setLeagueFilter(e.target.value)}
+                  className="rounded-md border-gray-300 shadow-sm text-sm focus:border-red-500 focus:ring-red-500"
+                >
+                  <option value="">All Leagues</option>
+                  {leagues.map((league) => (
+                    <option key={league} value={league}>
+                      {league}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Team</label>
+                <select
+                  value={teamFilter}
+                  onChange={(e) => setTeamFilter(e.target.value)}
+                  className="rounded-md border-gray-300 shadow-sm text-sm focus:border-red-500 focus:ring-red-500"
+                >
+                  <option value="">All Teams</option>
+                  {teams.map((team) => (
+                    <option key={team} value={team}>
+                      {team}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {filteredUpcoming.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredUpcoming.map((match) => (
+                <MatchCard key={match.id} match={match} />
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-center py-6">No matches match your filters.</p>
+          )}
+        </section>
+      );
     }
-  };
 
-  const totalDots = Math.ceil(matches.length / 9); // 3 cards per view, adjust dots
-
-  const scrollToCard = (dotIndex) => {
-    if (matchCarouselRef.current) {
-      const cardWidth = matchCarouselRef.current.querySelector('.snap-center')?.offsetWidth || 350;
-      const cardsPerView = 3;
-      const scrollPosition = dotIndex * cardsPerView * cardWidth;
-      matchCarouselRef.current.scrollTo({
-        left: scrollPosition,
-        behavior: 'smooth',
-      });
-    }
-  };
-
-  if (loading) {
-    return <FixturesPageSkeleton />;
-  }
-
-  if (error) {
     return (
-      <div className="container mx-auto px-6 py-8 text-center">
-        <p className="text-red-400 text-lg">{error}</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-100 to-white py-8">
-      <meta name="description" content="View all cricket fixtures, including live, upcoming, and past matches. Stay updated with comprehensive match schedules." />
-      <meta name="keywords" content="cricket fixtures, match schedules, live cricket, upcoming matches" />
-      <meta name="robots" content="index, follow" />
-      <title>Cricket Hub - All Fixtures</title>
-      <div className="container mx-auto px-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">All Fixtures</h1>
-        <div className="hidden md:flex flex-wrap items-center gap-3 mb-8">
-          {filters.map((filter) => (
-            <button
-              key={filter.id}
-              onClick={() => setActiveFilter(filter.id)}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 whitespace-nowrap ${
-                activeFilter === filter.id
-                  ? 'bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-lg'
-                  : 'bg-white/10 text-white hover:bg-white/20'
-              }`}
-            >
-              {filter.label}
-            </button>
+      <section key={id} className="mb-12">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">{title}</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {matchList.map((match) => (
+            <MatchCard key={match.id} match={match} />
           ))}
         </div>
-        <div className="md:hidden flex justify-center mb-8">
-          <Menu as="div" className="relative inline-block text-left w-full">
-            <div>
-              <Menu.Button className="inline-flex w-full justify-between items-center rounded-md bg-gradient-to-r from-red-500 to-orange-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-600">
-                {filters.find((f) => f.id === activeFilter)?.label || 'Select a filter'}
-                <ChevronDownIcon className="-mr-1 ml-2 h-5 w-5" aria-hidden="true" />
-              </Menu.Button>
-            </div>
-            <Transition
-              as={Fragment}
-              enter="transition ease-out duration-100"
-              enterFrom="transform opacity-0 scale-95"
-              enterTo="transform opacity-100 scale-100"
-              leave="transition ease-in duration-75"
-              leaveFrom="transform opacity-100 scale-100"
-              leaveTo="transform opacity-0 scale-95"
-            >
-              <Menu.Items className="absolute right-0 z-20 mt-2 w-full origin-top-right rounded-md bg-gray-800 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                <div className="py-1">
-                  {filters.map((filter) => (
-                    <Menu.Item key={filter.id}>
-                      {({ active }) => (
-                        <button
-                          onClick={() => setActiveFilter(filter.id)}
-                          className={classNames(
-                            active ? 'bg-gray-700 text-white' : 'text-gray-300',
-                            'block px-4 py-2 text-sm w-full text-left'
-                          )}
-                        >
-                          {filter.label}
-                        </button>
-                      )}
-                    </Menu.Item>
-                  ))}
-                </div>
-              </Menu.Items>
-            </Transition>
-          </Menu>
-        </div>
-        {!error && matches.length > 0 && (
-          <>
-            <div
-              ref={matchCarouselRef}
-              onScroll={handleScroll}
-              className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory"
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-            >
-              {matches.map((match, index) => (
-                <div key={match.id || index} className="snap-center flex-shrink-0 w-full md:w-1/3">
-                  <MatchCard match={match} />
-                </div>
-              ))}
-            </div>
-            <div className="flex justify-center gap-2 mt-8">
-              {Array.from({ length: totalDots }).map((_, index) => (
-                <div
-                  key={index}
-                  className={`w-2 h-2 rounded-full cursor-pointer transition-colors duration-200 ${
-                    activeDot === index ? 'bg-red-500' : 'bg-gray-400'
-                  }`}
-                  onClick={() => scrollToCard(index)}
-                ></div>
-              ))}
-            </div>
-          </>
-        )}
-        {!error && matches.length === 0 && (
-          <div className="text-center py-8">
-            <p className="text-gray-400 text-lg">No matches found for the selected category.</p>
-          </div>
-        )}
+      </section>
+    );
+  };
+
+  if (loading) return <FixturesPageSkeleton />;
+  if (error)
+    return (
+      <div className="container mx-auto px-6 py-8 text-center text-red-500">
+        <p>{error}</p>
+      </div>
+    );
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-8">
+      {/* SEO */}
+      <meta name="description" content="Live, upcoming, and recent cricket matches. Real-time scores, schedules, and results." />
+      <meta name="keywords" content="cricket, live scores, fixtures, match schedule, ODI, T20, IPL, World Cup" />
+      <meta name="robots" content="index, follow" />
+      <title>Cricket Hub - Live & Upcoming Matches</title>
+
+      <div className="container mx-auto px-6">
+        <h1 className="text-4xl font-extrabold text-gray-900 mb-2">Cricket Fixtures</h1>
+        <p className="text-gray-600 mb-10">Stay updated with real-time scores and upcoming games.</p>
+
+        {renderSection('🔴 Live Matches', matches.live, 'live')}
+        {renderSection('📅 Upcoming Matches', matches.upcoming, 'upcoming')}
+        {renderSection('✅ Finished Matches', matches.finished, 'finished')}
       </div>
     </div>
   );

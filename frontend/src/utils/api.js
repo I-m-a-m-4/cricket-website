@@ -68,20 +68,34 @@ export const fetchLiveMatches = async () => {
     }
 };
 
-export const fetchUpcomingMatches = async () => {
-    try {
-        const today = new Date().toISOString().split('T')[0];
-        const nextWeek = new Date(new Date().setDate(new Date().getDate() + 7)).toISOString().split('T')[0];
-        const response = await axios.get(`${BASE_URL}/fixtures`, {
-            params: { filter: `starts_between:${today},${nextWeek};status:Fixture`, include: 'localteam,visitorteam,league' },
-        });
-        return response.data;
-    } catch (error) {
-        console.error('API Error:', error.message);
-        throw error;
-    }
-};
+/// src/utils/api.js
 
+export const fetchUpcomingMatches = async () => {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
+
+    const response = await axios.get(`${BASE_URL}/fixtures`, {
+      params: {
+        filter: `starts_between:${today},${nextWeek}`,
+        include: 'localteam,visitorteam,league',
+      },
+    });
+
+    // ✅ Safe access
+    const data = response?.data;
+    if (!data || !Array.isArray(data.data)) {
+      console.warn('Invalid or empty response from /fixtures:', data);
+      return [];
+    }
+
+    // ✅ Filter only upcoming (not finished)
+    return data.data.filter((match) => match.status === 'Fixture');
+  } catch (error) {
+    console.error('Error fetching upcoming matches:', error.message || error);
+    return [];
+  }
+};
 export const fetchNews = async (maxRetries = 3) => {
     let retries = 0;
     while (retries < maxRetries) {
