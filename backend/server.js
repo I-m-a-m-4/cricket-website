@@ -92,26 +92,48 @@ app.get('/api/matches/legends-league', async (req, res) => {
     }
 });
 
+app.get('/api/matches/recent', async (req, res) => {
+    try {
+        const response = await axios.get(`${API_BASE_URL}/fixtures`, {
+            params: {
+                api_token: API_TOKEN,
+                'filter[status]': 'Finished',
+                include: 'localteam,visitorteam,league,venue,runs',
+                sort: '-starting_at'
+            },
+            timeout: 10000
+        });
+        res.json(response.data.data.slice(0, 5));
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch recent matches' });
+    }
+});
+
 // Endpoint to get live matches
 app.get('/api/matches/live', async (req, res) => {
     try {
         const response = await axios.get(`${API_BASE_URL}/livescores`, {
             params: {
                 api_token: API_TOKEN,
-                'include': 'localteam,visitorteam,league,venue,runs'
-            }
+                include: 'localteam,visitorteam,league,venue,runs,batting,bowling,scoreboards,balls,firstumpire,secondumpire,tvumpire,manofmatch'
+            },
+            timeout: 10000
         });
+
         res.json(response.data.data);
     } catch (error) {
         console.error('Error fetching live matches:', error.message);
         if (error.response) {
             console.error('API Response Status:', error.response.status);
             console.error('API Response Data:', error.response.data);
+            return res.status(error.response.status).json({
+                error: 'Failed to fetch live matches',
+                details: error.response.data.message?.message || 'Invalid include or API error'
+            });
         }
-        res.status(500).json({ error: 'Failed to fetch live matches' });
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
-
 // Endpoint to get upcoming matches
 app.get('/api/matches/upcoming', async (req, res) => {
     try {
