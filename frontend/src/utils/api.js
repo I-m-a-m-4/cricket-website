@@ -172,6 +172,21 @@ export const fetchSeasons = async (maxRetries = 3) => {
     return [];
 };
 
+export const fetchRecentMatches = async () => {
+    try {
+        const BASE_URL = import.meta.env.MODE === 'production'
+            ? import.meta.env.VITE_RENDER_URL
+            : 'http://localhost:3001/api';
+
+        const response = await axios.get(`${BASE_URL}/matches/recent`);
+        console.log('Fetched recent matches:', response.data.length);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching recent matches:", error.message);
+        return [];
+    }
+};
+
 export const fetchTopPlayers = async () => {
     try {
         const startTime = performance.now();
@@ -196,6 +211,44 @@ export const fetchTopPlayers = async () => {
         }
         return [];
     }
+};
+
+// src/api.js
+
+export const fetchCricketNews = async () => {
+  try {
+    const API_KEY = import.meta.env.VITE_NEWSAPI_KEY || 'pub_acedfd3cbe3f45e2a55183787d8359de';
+    const response = await axios.get('https://newsdata.io/api/1/news', {
+      params: {
+        apikey: API_KEY,
+        country: 'in,us,gb',     // Top cricket nations
+        language: 'en',
+        category: 'sports',
+        q: 'cricket',            // Search keyword
+        size: 6                  // Number of articles
+      },
+      timeout: 10000
+    });
+
+    const articles = response.data.results || [];
+
+    // Map to consistent format
+    return articles.map(article => ({
+      id: article.article_id || article.link,
+      title: article.title || 'No title',
+      description: article.description || article.content || 'No description available.',
+      image: article.image_url || 'https://via.placeholder.com/600x400?text=No+Image',
+      link: article.link,
+      publishedAt: article.pubDate ? new Date(article.pubDate).toLocaleDateString() : 'Unknown',
+      source: article.source_id || 'Unknown Source'
+    }));
+  } catch (error) {
+    console.error("Error fetching cricket news:", error.message);
+    if (error.response) {
+      console.error("News API Error:", error.response.status, error.response.data);
+    }
+    return [];
+  }
 };
 
 export const fetchPastMatches = async () => {

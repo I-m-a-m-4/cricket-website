@@ -5,7 +5,7 @@ import { GiCricketBat } from 'react-icons/gi'; // Changed to GiCricketBat from g
 const NotFoundPage = () => {
   return (
     <section className="max-w-7xl mx-auto px-4 py-20 bg-white min-h-screen flex items-center justify-center"  style={{
-    backgroundImage: "url('/404bg.jpg')",
+    backgroundImage: "url('/404bggt.jpg')",
     backgroundPosition: "center",   // centers the image
     backgroundRepeat: "no-repeat",  // prevents tiling
     backgroundSize: "cover",        // makes it fill the container

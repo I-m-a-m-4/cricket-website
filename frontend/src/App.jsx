@@ -8,12 +8,11 @@ import Navbar from "./components/Navbar.jsx";
 import Footer from "./components/Footer.jsx";
 import NewsPage from "./pages/NewsPage.jsx";
 import NotFoundPage from "./pages/NotFoundPage.jsx";
+import LiveScorePage from "./pages/LiveScorePage.jsx";
 import LeaguesPage from "./pages/LeaguesPage.jsx"; // Import the new page
 import { ErrorBoundary } from "react-error-boundary";
-
+import RankingPage from "./pages/RankingPage.jsx";
 const CricketPage = () => <div>Cricket Page Content</div>;
-const RankingPage = () => <div>Ranking Page Content</div>;
-const LiveMatchPage = () => <div>Live Match Page Content</div>;
 const ContactPage = () => <div>Contact Page Content</div>;
 
 function ErrorFallback({ error, resetErrorBoundary }) {
@@ -43,10 +42,10 @@ function App() {
           <Route path="/standings" element={<StandingsPage />} />
           <Route path="/team/:id" element={<TeamPage />} />
           <Route path="/cricket" element={<CricketPage />} />
-          <Route path="/ranking" element={<RankingPage />} />
-          <Route path="/live-match" element={<LiveMatchPage />} />
+          <Route path="/rankings" element={<RankingPage />} />
+          <Route path="/live-scores" element={<LiveScorePage />} />
           <Route path="/contact" element={<ContactPage />} />
-          <Route path="/fixtures" element={<FixturesPage />} />
+          <Route path="/fixtures-results" element={<FixturesPage />} />
           <Route path="/news/:id" element={<NewsPage />} />
           <Route path="/leagues" element={<LeaguesPage />} /> {/* Add the new route */}
           <Route path="*" element={<NotFoundPage />} />
