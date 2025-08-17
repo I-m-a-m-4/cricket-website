@@ -14,13 +14,11 @@ const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
 // Check if the API tokens are set
 if (!API_TOKEN) {
     console.error("SPORTMONKS_API_TOKEN is not set. Please add it to your .env file.");
-    // This will exit the application if the token is missing, preventing 500 errors.
     process.exit(1); 
 }
 
 if (!YOUTUBE_API_KEY) {
     console.error("YOUTUBE_API_KEY is not set. Please add it to your .env file.");
-    // Exit if YouTube API key is missing
     process.exit(1); 
 }
 
@@ -92,8 +90,7 @@ app.get('/api/matches/legends-league', async (req, res) => {
     }
 });
 
-// server.js
-
+// Endpoint to get rankings for ICC formats
 app.get('/api/rankings/icc/:format', async (req, res) => {
   const { format } = req.params;
   const validFormats = ['test', 'odi', 't20i'];
@@ -123,7 +120,7 @@ app.get('/api/rankings/icc/:format', async (req, res) => {
         name: teamName.trim(),
         code: flagCode.trim(),
         points: parseFloat(points),
-        image: `https://images.sportmonks.com/flags/${flagCode.toLowerCase()}.png` // Reliable flag CDN
+        image: `https://images.sportmonks.com/flags/${flagCode.toLowerCase()}.png`
       });
     }
 
@@ -137,6 +134,8 @@ app.get('/api/rankings/icc/:format', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch ICC rankings' });
   }
 });
+
+// Endpoint to get recent matches
 app.get('/api/matches/recent', async (req, res) => {
     try {
         const response = await axios.get(`${API_BASE_URL}/fixtures`, {
@@ -179,6 +178,7 @@ app.get('/api/matches/live', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+
 // Endpoint to get upcoming matches
 app.get('/api/matches/upcoming', async (req, res) => {
     try {
@@ -199,15 +199,17 @@ app.get('/api/matches/upcoming', async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch upcoming matches' });
     }
 });
+
+// Endpoint to get seasons
 app.get('/api/seasons', async (req, res) => {
-    const API_BASE_URL = 'https://cricket.sportmonks.com/api/v2.0'; // Hardcoded, no space
+    const API_BASE_URL = 'https://cricket.sportmonks.com/api/v2.0';
     const API_TOKEN = process.env.SPORTMONKS_API_TOKEN;
 
     try {
         const url = new URL(`${API_BASE_URL}/seasons`);
         url.searchParams.append('api_token', API_TOKEN);
         url.searchParams.append('include', 'league');
-        url.searchParams.append('sort', 'league_id,name'); // ← No space
+        url.searchParams.append('sort', 'league_id,name');
 
         console.log('🎯 Requesting:', url.toString());
 
@@ -248,6 +250,7 @@ app.get('/api/seasons', async (req, res) => {
         });
     }
 });
+
 // Endpoint to get "news" articles from recent fixtures
 app.get('/api/news', async (req, res) => {
     try {
@@ -298,6 +301,7 @@ app.get('/api/news', async (req, res) => {
     }
 });
 
+// Endpoint to get YouTube videos
 app.get('/api/videos', async (req, res) => {
   console.log('Received request for /api/videos');
   try {
@@ -326,6 +330,8 @@ app.get('/api/videos', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch videos' });
   }
 });
+
+// Endpoint to get fixtures
 app.get('/api/fixtures', async (req, res) => {
   console.log('Received request for /api/fixtures');
   try {
@@ -336,7 +342,7 @@ app.get('/api/fixtures', async (req, res) => {
     const response = await axios.get(`${API_BASE_URL}/fixtures`, {
       params: {
         api_token: process.env.SPORTMONKS_API_TOKEN,
-        filter: `starts_between:${today},${nextWeek};status:Fixture`, // Added status filter
+        filter: `starts_between:${today},${nextWeek};status:Fixture`,
         include: 'localteam,visitorteam,league',
         ...req.query,
       },
@@ -358,7 +364,8 @@ app.get('/api/fixtures', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch fixtures' });
   }
 });
-// New endpoint to get standings for a specific season
+
+// Endpoint to get standings for a specific season
 app.get('/api/standings/:seasonId', async (req, res) => {
     try {
         const { seasonId } = req.params;
@@ -378,40 +385,66 @@ app.get('/api/standings/:seasonId', async (req, res) => {
     }
 });
 
+// Endpoint to get top players
 app.get('/api/players/top', async (req, res) => {
   try {
     const startTime = performance.now();
     const response = await axios.get(`${API_BASE_URL}/players`, {
       params: {
         api_token: API_TOKEN,
-        include: 'teams,position',
+        include: 'teams,position,country',
         order: 'updated_at:desc',
+        per_page: 10, // Limit to 10 players
       },
-      timeout: 10000, // Reduce timeout to 10 seconds to fail faster
+      timeout: 10000,
     });
     const endTime = performance.now();
     console.log(`Sportmonks API call took ${Math.round(endTime - startTime)}ms`);
-    console.log('Raw Players Response:', response.data);
+    console.log('Raw Players Response:', JSON.stringify(response.data, null, 2));
 
     if (!response.data || !Array.isArray(response.data.data)) {
       console.warn('Invalid or empty response from Sportmonks:', response.data);
       return res.json([]);
     }
-    const topPlayers = response.data.data.slice(0, 10);
+
+    // Format player data for frontend
+    const topPlayers = response.data.data.map(player => ({
+      id: player.id,
+      fullname: player.fullname || 'Unknown Player',
+      image_path: player.image_path || `https://placehold.co/200x200?text=${player.fullname?.[0] || 'P'}`,
+      position: player.position?.name || 'Unknown',
+      team: player.teams?.data?.[0]?.name || 'Unknown Team',
+      country: player.country?.name || 'Unknown',
+      country_flag: player.country?.image_path || `https://placehold.co/20x20?text=?`,
+    }));
+
     res.json(topPlayers);
   } catch (error) {
-    console.error('Error fetching players:', error.message, error.code);
+    console.error('Error fetching top players:', error.message, error.code);
+    console.error('Full Error Object:', JSON.stringify(error, null, 2));
     if (error.code === 'ECONNABORTED') {
-      console.warn('Sportmonks API request timed out. Check API status or rate limits.');
+      console.warn('Sportmonks API request timed out. Check API status or increase timeout.');
+      return res.status(504).json({ error: 'Request timed out', details: 'Sportmonks API took too long to respond' });
     }
     if (error.response) {
       console.error('API Response Status:', error.response.status);
       console.error('API Response Data:', error.response.data);
+      if (error.response.status === 429) {
+        return res.status(429).json({ error: 'Rate limit exceeded', details: 'Too many requests to Sportmonks API' });
+      }
+      if (error.response.status === 401) {
+        return res.status(401).json({ error: 'Authentication failed', details: 'Invalid or expired API token' });
+      }
+      return res.status(error.response.status).json({
+        error: 'Failed to fetch top players',
+        details: error.response.data.message || 'Unknown API error',
+      });
     }
-    res.status(500).json({ error: 'Failed to fetch players' });
+    res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 });
-// New endpoint to get a list of all teams
+
+// Endpoint to get a list of all teams
 app.get('/api/teams', async (req, res) => {
     try {
         const response = await axios.get(`${API_BASE_URL}/teams`, {
@@ -430,7 +463,7 @@ app.get('/api/teams', async (req, res) => {
     }
 });
 
-// New endpoint to get a list of all leagues
+// Endpoint to get a list of all leagues
 app.get('/api/leagues', async (req, res) => {
     try {
         const response = await axios.get(`${API_BASE_URL}/leagues`, {
@@ -450,18 +483,19 @@ app.get('/api/leagues', async (req, res) => {
     }
 });
 
+// Endpoint to get global team rankings
 app.get('/api/team-rankings/global', async (req, res) => {
   try {
     const { type, gender } = req.query;
     const params = {
       api_token: API_TOKEN,
-      include: 'teams' // Include team details
+      include: 'teams'
     };
     if (type) params['filter[type]'] = type.toUpperCase();
     if (gender) params['filter[gender]'] = gender.toLowerCase();
 
     const response = await axios.get(`${API_BASE_URL}/team-rankings`, { params });
-    console.log('Raw Team Rankings Response:', response.data); // Debug the full response
+    console.log('Raw Team Rankings Response:', response.data);
 
     const rankings = response.data.data
       .filter(r => !type || r.type === type.toUpperCase())
@@ -469,7 +503,7 @@ app.get('/api/team-rankings/global', async (req, res) => {
       .map(ranking => ({
         ...ranking,
         teams: ranking.team || [],
-        rating: ranking.rating || ranking.points || ranking.score || 0 // Map potential score fields
+        rating: ranking.rating || ranking.points || ranking.score || 0
       }));
 
     res.json(rankings);
@@ -482,6 +516,178 @@ app.get('/api/team-rankings/global', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch global team rankings' });
   }
 });
+
+// GET Team by ID with players and officials
+app.get('/api/teams/:id', async (req, res) => {
+  const { id } = req.params;
+
+  if (!id || isNaN(id)) {
+    return res.status(400).json({ error: 'Invalid team ID' });
+  }
+
+  try {
+    const response = await axios.get(`${API_BASE_URL}/teams/${id}`, {
+      params: {
+        api_token: API_TOKEN,
+        include: 'players,players.profile,players.image,officials,venue,country'
+      },
+      timeout: 10000
+    });
+
+    const team = response.data.data;
+
+    if (!team) {
+      return res.status(404).json({ error: 'Team not found in SportMonks API' });
+    }
+
+    const players = (team.players?.data || []).map(p => ({
+      id: p.id,
+      name: p.name || 'Unknown Player',
+      image: p.image?.url || `https://avatar.vercel.sh/${p.name || 'P'}.png?text=${(p.name || 'P').charAt(0)}`,
+      position: p.position?.name || 'Player',
+      batting_style: p.batting_style?.name || 'Unknown',
+      bowling_style: p.bowling_style?.name || 'Unknown',
+      role: p.type || 'Player',
+      country: p.country?.name || 'Unknown',
+      date_of_birth: p.date_of_birth || null,
+      height: p.height || null,
+      weight: p.weight || null,
+      career_stats: {
+        matches: p.stats?.matches || 0,
+        runs: p.stats?.runs || 0,
+        wickets: p.stats?.wickets || 0,
+        avg: p.stats?.average || 0,
+        sr: p.stats?.strike_rate || 0,
+        econ: p.stats?.economy || 0
+      }
+    }));
+
+    const officials = (team.officials?.data || []).map(o => ({
+      id: o.id,
+      name: o.name || 'Unknown Staff',
+      role: o.position?.name || 'Staff',
+      image: o.image?.url || `https://avatar.vercel.sh/${o.name || 'S'}.png?text=${(o.name || 'S').charAt(0)}`
+    }));
+
+    res.json({
+      id: team.id,
+      name: team.name || 'Unknown Team',
+      code: team.code || '',
+      image: team.image_path || `https://avatar.vercel.sh/${team.name || 'T'}.png?text=${(team.name || 'T').charAt(0)}`,
+      country: team.country?.name || 'Unknown',
+      founded: team.founded || 'Unknown',
+      venue: team.venue?.name || 'Unknown Venue',
+      city: team.venue?.city || 'Unknown City',
+      website: team.website || '',
+      description: team.description || `The ${team.name || 'team'} are a professional cricket team.`,
+      players,
+      officials
+    });
+  } catch (error) {
+    console.error('Error fetching team:', error.message);
+    if (error.response) {
+      console.error('SportMonks API Error:', error.response.status, error.response.data);
+      return res.status(error.response.status).json({
+        error: 'Failed to fetch team',
+        details: error.response.data.message || 'Unknown API error'
+      });
+    }
+    res.status(500).json({ error: 'Server error. Please try again later.' });
+  }
+});
+
+// GET Player by ID
+app.get('/api/players/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const response = await axios.get(`${API_BASE_URL}/players/${id}`, {
+      params: {
+        api_token: API_TOKEN,
+        include: 'profile,image,team,country,batting_style,bowling_style,position'
+      }
+    });
+
+    const p = response.data.data;
+
+    const player = {
+      id: p.id,
+      name: p.name,
+      full_name: p.profile?.fullname || p.name,
+      image: p.image?.url || `https://avatar.vercel.sh/${p.name}.png?text=${p.name.charAt(0)}`,
+      team: p.team?.name,
+      country: p.country?.name,
+      role: p.position?.name || p.type || 'Player',
+      batting_style: p.batting_style?.name || 'Unknown',
+      bowling_style: p.bowling_style?.name || 'Unknown',
+      date_of_birth: p.date_of_birth,
+      height: p.height,
+      weight: p.weight,
+      debut: p.profile?.debut,
+      birth_place: p.profile?.birth_place,
+      nickname: p.profile?.nickname || null,
+      description: p.profile?.information || `A talented ${p.position?.name || 'player'} from ${p.country?.name}.`,
+      stats: {
+        matches: p.stats?.matches || 0,
+        runs: p.stats?.runs || 0,
+        wickets: p.stats?.wickets || 0,
+        avg: p.stats?.average || 0,
+        sr: p.stats?.strike_rate || 0,
+        econ: p.stats?.economy || 0,
+        fifties: p.stats?.fifties || 0,
+        hundreds: p.stats?.hundreds || 0,
+        four_wickets: p.stats?.four_wickets || 0,
+        five_wickets: p.stats?.five_wickets || 0
+      }
+    };
+
+    res.json(player);
+  } catch (error) {
+    console.error('Error fetching player:', error.message);
+    res.status(500).json({ error: 'Failed to fetch player' });
+  }
+});
+
+// New endpoint for match details
+app.get('/api/matches/:id', async (req, res) => {
+    const { id } = req.params;
+
+    // Validate ID
+    if (!id || isNaN(id)) {
+        console.error('Invalid match ID:', id);
+        return res.status(400).json({ error: 'Invalid match ID' });
+    }
+
+    try {
+        const response = await axios.get(`${API_BASE_URL}/fixtures/${id}`, {
+            params: {
+                api_token: API_TOKEN,
+                include: 'localteam,visitorteam,league,venue,runs,scoreboards,balls,lineup',
+            },
+            timeout: 10000,
+        });
+
+        const match = response.data.data;
+
+        if (!match) {
+            console.warn('Match not found for ID:', id);
+            return res.status(404).json({ error: 'Match not found' });
+        }
+
+        res.json(match);
+    } catch (error) {
+        console.error('Error fetching match details for ID:', id, error.message);
+        if (error.response) {
+            console.error('API Response Status:', error.response.status);
+            console.error('API Response Data:', error.response.data);
+            return res.status(error.response.status).json({
+                error: 'Failed to fetch match details',
+                details: error.response.data.message || 'Unknown API error'
+            });
+        }
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
