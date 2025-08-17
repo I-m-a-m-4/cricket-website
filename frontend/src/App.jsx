@@ -1,15 +1,15 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import HomePage from "./pages/HomePage.jsx";
-import MatchPage from "./pages/MatchPage.jsx";
+import MatchDetails from "./components/MatchDetails.jsx";
 import StandingsPage from "./pages/StandingsPage.jsx";
-import TeamPage from "./pages/TeamPage.jsx";
+import TeamPage from "./components/TeamPage.jsx";
+import TeamsPages from "./pages/TeamPage.jsx";
 import FixturesPage from "./pages/FixturesPage.jsx";
 import Navbar from "./components/Navbar.jsx";
 import Footer from "./components/Footer.jsx";
 import NewsPage from "./pages/NewsPage.jsx";
 import NotFoundPage from "./pages/NotFoundPage.jsx";
 import LiveScorePage from "./pages/LiveScorePage.jsx";
-import LeaguesPage from "./pages/LeaguesPage.jsx"; // Import the new page
 import { ErrorBoundary } from "react-error-boundary";
 import RankingPage from "./pages/RankingPage.jsx";
 const CricketPage = () => <div>Cricket Page Content</div>;
@@ -33,21 +33,26 @@ function ErrorFallback({ error, resetErrorBoundary }) {
 function App() {
   return (
     <BrowserRouter>
-      <ErrorBoundary FallbackComponent={ErrorFallback} onReset={() => window.location.reload()}>
+      <ErrorBoundary
+        FallbackComponent={ErrorFallback}
+        onReset={() => window.location.reload()}
+      >
         <Navbar />
         <Routes>
           <Route path="/" element={<Navigate to="/home" replace />} />
           <Route path="/home" element={<HomePage />} />
-          <Route path="/match/:id" element={<MatchPage />} />
+          <Route path="/match/:id" element={<MatchDetails />} />
           <Route path="/standings" element={<StandingsPage />} />
           <Route path="/team/:id" element={<TeamPage />} />
           <Route path="/cricket" element={<CricketPage />} />
           <Route path="/rankings" element={<RankingPage />} />
           <Route path="/live-scores" element={<LiveScorePage />} />
           <Route path="/contact" element={<ContactPage />} />
+          <Route path="/teams-players" element={<TeamsPages />} />
           <Route path="/fixtures-results" element={<FixturesPage />} />
           <Route path="/news/:id" element={<NewsPage />} />
-          <Route path="/leagues" element={<LeaguesPage />} /> {/* Add the new route */}
+          {" "}
+          {/* Add the new route */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
         <Footer />

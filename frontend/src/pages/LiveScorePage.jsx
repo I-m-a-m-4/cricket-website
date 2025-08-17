@@ -1,17 +1,21 @@
-// src/pages/LiveScorePage.jsx
 import React, { useState, useEffect } from 'react';
 import { fetchLiveMatches, fetchRecentMatches } from '../utils/api';
 
-// 🔽 League Logos (Place these in /public/leagues/)
+// League Logos (Place these in /public/)
 const LEAGUE_LOGOS = {
   'The Hundred': '/th.png',
   'The Women\'s Hundred': '/thw.jpeg',
-  'IPL': 'TL.png',
-  'Big Bash League': 'TL.png',
-  'The Ashes': 'TL.png',
-  'ICC World Cup': 'TL.png',
-  'PSL': 'TL.png',
-  default: 'TL.png'
+  'IPL': '/TL.png',
+  'Big Bash League': '/bb.jpg',
+  'The Ashes': '/rw.png',
+  'ICC World Cup': '/icc.jpg',
+  'PSL': '/rw.png',
+  'Test Series': '/test.jpg',
+  'Super Smash': '/ss.png',
+  'Royal London One-Day Cup': '/rw.jpg',
+  'T20 Blast': '/t20.jpg',
+  'CPL': '/cpl.png',
+  default: '/icc.jpg'
 };
 
 export default function LiveScorePage() {
@@ -19,6 +23,12 @@ export default function LiveScorePage() {
   const [recentMatches, setRecentMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedMatchId, setExpandedMatchId] = useState(null);
+
+  // Log component mount
+  useEffect(() => {
+    console.log('LiveScorePage mounted');
+    return () => console.log('LiveScorePage unmounted');
+  }, []);
 
   // Format overs: 16.4 → "16.4"
   const formatOvers = (overs) => {
@@ -54,7 +64,9 @@ export default function LiveScorePage() {
 
   // Get league logo
   const getLeagueLogo = (leagueName) => {
-    return LEAGUE_LOGOS[leagueName] || LEAGUE_LOGOS.default;
+    const logo = LEAGUE_LOGOS[leagueName] || LEAGUE_LOGOS.default;
+    console.log(`Loading logo for ${leagueName}: ${logo}`);
+    return logo;
   };
 
   // Status badge color
@@ -165,15 +177,15 @@ export default function LiveScorePage() {
           <h2 className="text-3xl font-bold mb-6 text-gray-800">🔥 Live Matches</h2>
           <div className="overflow-x-auto shadow-lg rounded-lg border">
             <table className="min-w-full divide-y divide-gray-200 bg-white">
-              <thead className="bg-gradient-to-r from-blue-50 to-indigo-50">
+              <thead className="bg-[#122e47] text-white">
                 <tr>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-800 uppercase tracking-wider whitespace-nowrap">Match</th>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-800 uppercase tracking-wider whitespace-nowrap">Innings</th>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-800 uppercase tracking-wider whitespace-nowrap">Score</th>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-800 uppercase tracking-wider whitespace-nowrap">RR</th>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-800 uppercase tracking-wider whitespace-nowrap">Target</th>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-800 uppercase tracking-wider whitespace-nowrap">Venue</th>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-800 uppercase tracking-wider whitespace-nowrap">League</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider whitespace-nowrap">Match</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider whitespace-nowrap">Innings</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider whitespace-nowrap">Score</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider whitespace-nowrap">RR</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider whitespace-nowrap">Target</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider whitespace-nowrap">Venue</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider whitespace-nowrap">League</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -205,12 +217,10 @@ export default function LiveScorePage() {
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center space-x-2">
-                            <img src={localTeam.flag} alt={localTeam.name} className="w-8 h-8 rounded-full border" />
-                            <span className="font-semibold">{localTeam.name}</span>
-                          </div>
-                          <div className="flex items-center space-x-2 mt-1">
-                            <img src={visitorTeam.flag} alt={visitorTeam.name} className="w-8 h-8 rounded-full border" />
-                            <span className="font-semibold">{visitorTeam.name}</span>
+                            <img src={localTeam.flag} alt={localTeam.name} className="w-8 h-8 rounded-full border" onError={(e) => console.error(`Failed to load flag for ${localTeam.name}: ${e.target.src}`)} />
+                            <span className="font-bold text-gray-900">{localTeam.name}</span>
+                            <img src="/vs.png" alt="vs" className="w-5 h-5 inline-block mx-2" onError={(e) => console.error('Failed to load vs.png')} />
+                            <span className="font-bold text-gray-900">{visitorTeam.name}</span>
                           </div>
                           <div className="text-xs text-gray-500 mt-1">{match.type}</div>
                         </td>
@@ -233,7 +243,7 @@ export default function LiveScorePage() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{venue}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center space-x-2">
-                            <img src={leagueLogo} alt={leagueName} className="w-6 h-6 rounded" />
+                            <img src={leagueLogo} alt={leagueName} className="w-6 h-6 rounded" onError={(e) => console.error(`Failed to load logo for ${leagueName}: ${e.target.src}`)} />
                             <span className="text-sm font-medium text-indigo-700">{leagueName}</span>
                           </div>
                         </td>
@@ -283,13 +293,13 @@ export default function LiveScorePage() {
           <h2 className="text-3xl font-bold mb-6 text-gray-800">🏆 Recent Results</h2>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
-              <thead>
-                <tr className="bg-gradient-to-r from-gray-100 to-gray-50">
-                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-800 uppercase tracking-wider whitespace-nowrap">Match</th>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-800 uppercase tracking-wider whitespace-nowrap">Score</th>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-800 uppercase tracking-wider whitespace-nowrap">Result</th>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-800 uppercase tracking-wider whitespace-nowrap">Venue</th>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-800 uppercase tracking-wider whitespace-nowrap">League</th>
+              <thead className="bg-[#122e47] text-white">
+                <tr>
+                  <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider whitespace-nowrap">Match</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider whitespace-nowrap">Score</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider whitespace-nowrap">Result</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider whitespace-nowrap">Venue</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider whitespace-nowrap">League</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -308,12 +318,10 @@ export default function LiveScorePage() {
                     <tr key={match.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center space-x-2">
-                          <img src={localTeam.flag} alt={localTeam.name} className="w-7 h-7 rounded-full" />
-                          <span className="font-medium">{localTeam.name}</span>
-                        </div>
-                        <div className="flex items-center space-x-2 mt-1">
-                          <img src={visitorTeam.flag} alt={visitorTeam.name} className="w-7 h-7 rounded-full" />
-                          <span className="font-medium">{visitorTeam.name}</span>
+                          <img src={localTeam.flag} alt={localTeam.name} className="w-7 h-7 rounded-full" onError={(e) => console.error(`Failed to load flag for ${localTeam.name}: ${e.target.src}`)} />
+                          <span className="font-bold text-gray-900">{localTeam.name}</span>
+                          <img src="/vs.png" alt="vs" className="w-5 h-5 inline-block mx-2" onError={(e) => console.error('Failed to load vs.png')} />
+                          <span className="font-bold text-gray-900">{visitorTeam.name}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -326,7 +334,7 @@ export default function LiveScorePage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{match.venue?.name || 'Unknown'}</td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center space-x-2">
-                          <img src={leagueLogo} alt={leagueName} className="w-6 h-6 rounded" />
+                          <img src={leagueLogo} alt={leagueName} className="w-6 h-6 rounded" onError={(e) => console.error(`Failed to load logo for ${leagueName}: ${e.target.src}`)} />
                           <span className="text-sm font-medium text-indigo-700">{leagueName}</span>
                         </div>
                       </td>

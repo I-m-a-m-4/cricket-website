@@ -13,11 +13,10 @@ import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import MustWatchSection from "../components/MustWatchSection.jsx";
 import LatestNewsSection from "../components/LatestNewsSection.jsx";
 import KeySeriesSection from "../components/KeySeriesSection.jsx";
-import VideosSection from "../components/VideoSection.jsx";
-import TrendingPlayers from "../components/TrendingPlayers.jsx";
 import RankingsSection from "../components/RankingSection.jsx";
 import InDepthSection from "../components/InDepthSection.jsx";
 import MatchesSection from "../components/MatchesSection.jsx";
+import Leagues from "../components/Leagues.jsx";
 
 const filters = [
   { id: "all-matches", label: "All Matches" },
@@ -303,8 +302,7 @@ function HomePage() {
       <MustWatchSection />
       <MatchesSection />
       <RankingsSection />
-      <TrendingPlayers />
-      <VideosSection />
+      <Leagues/>
       <KeySeriesSection />
       <LatestNewsSection />
       <InDepthSection />
