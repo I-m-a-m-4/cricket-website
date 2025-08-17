@@ -3,15 +3,17 @@ import HomePage from "./pages/HomePage.jsx";
 import MatchDetails from "./components/MatchDetails.jsx";
 import StandingsPage from "./pages/StandingsPage.jsx";
 import TeamPage from "./components/TeamPage.jsx";
-import TeamsPages from "./pages/TeamPage.jsx";
+import TeamsPage from "./pages/TeamPage.jsx"; // Fixed import
 import FixturesPage from "./pages/FixturesPage.jsx";
 import Navbar from "./components/Navbar.jsx";
 import Footer from "./components/Footer.jsx";
 import NewsPage from "./pages/NewsPage.jsx";
+import NewsDetail from "./components/NewsDetail.jsx"; // New component
 import NotFoundPage from "./pages/NotFoundPage.jsx";
 import LiveScorePage from "./pages/LiveScorePage.jsx";
-import { ErrorBoundary } from "react-error-boundary";
 import RankingPage from "./pages/RankingPage.jsx";
+import { ErrorBoundary } from "react-error-boundary";
+
 const CricketPage = () => <div>Cricket Page Content</div>;
 const ContactPage = () => <div>Contact Page Content</div>;
 
@@ -44,15 +46,14 @@ function App() {
           <Route path="/match/:id" element={<MatchDetails />} />
           <Route path="/standings" element={<StandingsPage />} />
           <Route path="/team/:id" element={<TeamPage />} />
+          <Route path="/teams-players" element={<TeamsPage />} /> {/* Fixed route */}
           <Route path="/cricket" element={<CricketPage />} />
           <Route path="/rankings" element={<RankingPage />} />
           <Route path="/live-scores" element={<LiveScorePage />} />
           <Route path="/contact" element={<ContactPage />} />
-          <Route path="/teams-players" element={<TeamsPages />} />
           <Route path="/fixtures-results" element={<FixturesPage />} />
-          <Route path="/news/:id" element={<NewsPage />} />
-          {" "}
-          {/* Add the new route */}
+          <Route path="/news-highlights" element={<NewsPage />} /> {/* News list */}
+          <Route path="/news/:url" element={<NewsDetail />} /> {/* Article details */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
         <Footer />
