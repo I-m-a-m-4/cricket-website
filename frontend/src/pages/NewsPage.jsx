@@ -151,7 +151,7 @@ export default function NewsPage() {
       </head>
 
       {/* Hero Section */}
-      <header className="relative bg-cover bg-center h-64 md:h-96" style={{ backgroundImage: 'url(/stadium.jpg)' }}>
+      <header className="relative bg-cover bg-center h-64 md:h-96" style={{ backgroundImage: 'url(/newcr.jpg)' }}>
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/70 flex items-center justify-center">
           <h1 className="text-3xl md:text-5xl font-extrabold text-white text-center drop-shadow-lg">
             Latest Cricket News & Headlines
