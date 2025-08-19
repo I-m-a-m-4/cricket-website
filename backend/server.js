@@ -1161,6 +1161,24 @@ app.get('/api/news/trending', async (req, res) => {
     }
   }
 });
+
+// Add to server.js
+app.get('/api/stages/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const response = await axios.get(`${API_BASE_URL}/stages/${id}`, {
+      params: {
+        api_token: API_TOKEN,
+        include: 'fixtures,runs,standings',
+      },
+    });
+    res.json(response.data.data);
+  } catch (error) {
+    console.error('Error fetching stages:', error.message);
+    res.status(500).json({ error: 'Failed to fetch stages' });
+  }
+});
+
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
