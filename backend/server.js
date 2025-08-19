@@ -565,6 +565,7 @@ app.get('/api/teams', async (req, res) => {
     }
   }
 });
+// ... (previous imports and setup remain unchanged)
 app.get('/api/teams/:id', async (req, res) => {
   const { id } = req.params;
 
@@ -573,31 +574,30 @@ app.get('/api/teams/:id', async (req, res) => {
   }
 
   try {
-    const [teamResponse, matchesResponse] = await Promise.all([
-      axios.get(`${API_BASE_URL}/teams/${id}`, {
-        params: {
-          api_token: API_TOKEN,
-          include: 'country,squad,venue',
-        },
-        timeout: 10000,
-      }),
-      axios.get(`${API_BASE_URL}/fixtures`, {
-        params: {
-          api_token: API_TOKEN,
-          include: 'localteam,visitorteam,league,venue',
-          filter: { team_id: id },
-          sort: '-starting_at',
-          per_page: 10,
-        },
-        timeout: 10000,
-      }),
-    ]);
+    const teamResponse = await axios.get(`${API_BASE_URL}/teams/${id}`, {
+      params: {
+        api_token: API_TOKEN,
+        include: 'country,squad,fixtures,results', // Valid includes
+      },
+      timeout: 10000,
+    });
 
     const team = teamResponse.data.data;
-    const matches = matchesResponse.data.data || [];
 
     if (!team) {
-      return res.status(404).json({ error: 'Team not found in SportMonk API' });
+      return res.status(404).json({ error: 'Team not found in SportMonks API' });
+    }
+
+    // Fetch venue separately if venue_id is available
+    let venue = {};
+    if (team.venue_id) {
+      const venueResponse = await axios.get(`${API_BASE_URL}/venues/${team.venue_id}`, {
+        params: {
+          api_token: API_TOKEN,
+        },
+        timeout: 10000,
+      });
+      venue = venueResponse.data.data || {};
     }
 
     const players = (team.squad?.data || []).map((p) => ({
@@ -622,42 +622,38 @@ app.get('/api/teams/:id', async (req, res) => {
       },
     }));
 
-    const officials = []; // Officials not included; add if needed from squad or separate endpoint
+    const officials = []; // Officials not supported; keep empty
 
     const now = new Date();
-    const recentMatches = matches
-      .filter((m) => new Date(m.starting_at) < now)
-      .map((m) => ({
-        id: m.id,
-        vs: m.localteam_id === parseInt(id) ? m.visitorteam?.name : m.localteam?.name,
-        league: m.league?.name || 'Unknown',
-        result:
-          m.winner_team_id === parseInt(id)
-            ? 'Won'
-            : m.winner_team_id
-            ? 'Lost'
-            : m.draw_noresult
-            ? 'Draw'
-            : 'No Result',
-        date: m.starting_at
-          ? new Date(m.starting_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-          : 'TBD',
-      }));
+    const recentMatches = (team.results?.data || []).map((m) => ({
+      id: m.id,
+      vs: m.localteam_id === parseInt(id) ? m.visitorteam?.name : m.localteam?.name,
+      league: m.league?.name || 'Unknown',
+      result:
+        m.winner_team_id === parseInt(id)
+          ? 'Won'
+          : m.winner_team_id
+          ? 'Lost'
+          : m.draw_noresult
+          ? 'Draw'
+          : 'No Result',
+      date: m.starting_at
+        ? new Date(m.starting_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        : 'TBD',
+    }));
 
-    const upcoming = matches
-      .filter((m) => new Date(m.starting_at) >= now)
-      .map((u) => ({
-        id: u.id,
-        vs: u.localteam_id === parseInt(id) ? u.visitorteam?.name : u.localteam?.name,
-        league: u.league?.name || 'Unknown',
-        venue: u.venue?.name || 'Unknown',
-        date: u.starting_at
-          ? new Date(u.starting_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-          : 'TBD',
-        time: u.starting_at
-          ? new Date(u.starting_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-          : 'TBD',
-      }));
+    const upcoming = (team.fixtures?.data || []).map((u) => ({
+      id: u.id,
+      vs: u.localteam_id === parseInt(id) ? u.visitorteam?.name : u.localteam?.name,
+      league: u.league?.name || 'Unknown',
+      venue: u.venue?.name || 'Unknown',
+      date: u.starting_at
+        ? new Date(u.starting_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        : 'TBD',
+      time: u.starting_at
+        ? new Date(u.starting_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+        : 'TBD',
+    }));
 
     res.json({
       id: team.id,
@@ -667,13 +663,13 @@ app.get('/api/teams/:id', async (req, res) => {
       country: team.country?.name || 'Unknown',
       founded: team.founded || 'N/A',
       venue: {
-        name: team.venue?.name || 'Unknown Venue',
-        city: team.venue?.city || 'Unknown City',
-        image: team.venue?.image_path || null, // SportMonk venue image if available
-        description: team.venue?.description || 'No description available.',
+        name: venue.name || 'Unknown Venue',
+        city: venue.city || 'Unknown City',
+        image: venue.image_path || null,
+        description: venue.description || 'No description available.',
       },
       website: team.website || '',
-      description: team.description || `The ${team.name || 'team'} are a professional cricket team based in ${team.venue?.city || 'Unknown'}.`,
+      description: team.description || `The ${team.name || 'team'} are a professional cricket team based in ${venue.city || 'Unknown'}.`,
       players,
       officials,
       recentMatches,
@@ -691,6 +687,9 @@ app.get('/api/teams/:id', async (req, res) => {
     res.status(500).json({ error: 'Server error. Please try again later.' });
   }
 });
+
+// ... (rest of server.js remains the same)
+// ... (rest of the server.js remains unchanged)
 // GET Player by ID
 app.get('/api/players/:id', async (req, res) => {
   const { id } = req.params;
@@ -1045,7 +1044,123 @@ app.get('/api/venues/trending', async (req, res) => {
   }
 });
 
+app.get('/api/news/trending', async (req, res) => {
+  try {
+    const { lang = 'en', country = '', max = 5 } = req.query;
+    const cacheKey = `trending_news_${lang}_${country}_${max}`;
+    const cached = cache.get(cacheKey);
+    if (cached) {
+      return res.json(cached);
+    }
 
+    // Fetch trending news from GNews API
+    const response = await axios.get(`${GNEWS_API_URL}/search`, {
+      params: {
+        q: 'cricket trending',
+        lang,
+        country,
+        max,
+        token: GNEWS_API_TOKEN,
+      },
+      timeout: 10000,
+    });
+
+    let articles = response.data.articles.map((article) => ({
+      title: article.title,
+      description: article.description,
+      content: article.content,
+      url: article.url,
+      image: article.image,
+      publishedAt: article.publishedAt,
+      source: article.source.name,
+    }));
+
+    // If fewer than 5 articles, supplement with recent match-based articles
+    if (articles.length < 5) {
+      try {
+        const matchResponse = await axios.get(`${API_BASE_URL}/fixtures`, {
+          params: {
+            api_token: API_TOKEN,
+            'filter[status]': 'Finished',
+            include: 'localteam,visitorteam,season,runs',
+            sort: '-starting_at',
+          },
+          timeout: 10000,
+        });
+
+        const matchArticles = matchResponse.data.data.slice(0, 5 - articles.length).map(fixture => {
+          const winner = fixture.winner_team_id === fixture.localteam?.id 
+            ? fixture.localteam?.name 
+            : fixture.visitorteam?.name;
+          const localTeamScore = fixture.runs.find(run => run.team_id === fixture.localteam?.id);
+          const visitorTeamScore = fixture.runs.find(run => run.team_id === fixture.visitorteam?.id);
+
+          let description = `Match concluded.`;
+          if (localTeamScore && visitorTeamScore) {
+            description = `${fixture.localteam?.name} scored ${localTeamScore.score}/${localTeamScore.wickets} in ${localTeamScore.overs} overs. ${fixture.visitorteam?.name} scored ${visitorTeamScore.score}/${visitorTeamScore.wickets} in ${visitorTeamScore.overs} overs.`;
+          } else if (localTeamScore) {
+            description = `${fixture.localteam?.name} scored ${localTeamScore.score}/${localTeamScore.wickets} in ${localTeamScore.overs} overs.`;
+          } else if (visitorTeamScore) {
+            description = `${fixture.visitorteam?.name} scored ${visitorTeamScore.score}/${visitorTeamScore.wickets} in ${visitorTeamScore.overs} overs.`;
+          }
+          if (winner && localTeamScore && visitorTeamScore) {
+            description += ` ${winner} won the match.`;
+          }
+
+          return {
+            title: `${fixture.localteam?.name || 'Team A'} vs ${fixture.visitorteam?.name || 'Team B'} Match Report`,
+            description,
+            content: description,
+            url: `/match/${fixture.id}`,
+            image: fixture.localteam?.image_path || 'https://via.placeholder.com/600x400?text=Match+Image',
+            publishedAt: fixture.starting_at || new Date().toISOString(),
+            source: 'Cricket App',
+          };
+        });
+
+        articles = [...articles, ...matchArticles];
+      } catch (matchError) {
+        console.warn('Failed to fetch match-based articles:', matchError.message);
+      }
+    }
+
+    // If still fewer than 5 articles, use fallback articles
+    if (articles.length < 5) {
+      const fallback = FALLBACK_ARTICLES.slice(0, 5 - articles.length).map((article, index) => ({
+        ...article,
+        title: `${article.title} ${index + 1}`,
+        publishedAt: new Date(Date.now() - index * 86400000).toISOString(), // Spread dates
+      }));
+      articles = [...articles, ...fallback];
+    }
+
+    const data = {
+      totalArticles: articles.length,
+      articles: articles.slice(0, 5), // Ensure exactly 5 articles
+    };
+
+    cache.set(cacheKey, data, 3600);
+    res.json(data);
+  } catch (error) {
+    console.error('Error fetching trending news:', error.message);
+    if (error.response?.status === 429) {
+      res.status(429).json({ error: 'Rate limit exceeded', retryAfter: error.response.headers['retry-after'] || 60 });
+    } else if (error.response?.status === 401) {
+      res.status(401).json({ error: 'Invalid API token' });
+    } else {
+      // Return fallback articles in case of error
+      const fallback = FALLBACK_ARTICLES.slice(0, 5).map((article, index) => ({
+        ...article,
+        title: `${article.title} ${index + 1}`,
+        publishedAt: new Date(Date.now() - index * 86400000).toISOString(),
+      }));
+      res.status(500).json({
+        error: 'Failed to fetch trending news',
+        articles: fallback,
+      });
+    }
+  }
+});
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
