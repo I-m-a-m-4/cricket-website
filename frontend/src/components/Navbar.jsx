@@ -1,17 +1,19 @@
 import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
+import { useTheme } from "../context/ThemeContext";
 
 function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { isDarkMode, toggleTheme } = useTheme();
 
-  // Updated navigation links to better fit the app structure and API.
-   const navigationLinks = [
+  const navigationLinks = [
     { name: "Home", path: "/" },
     { name: "Live Scores", path: "/live-scores" },
     { name: "Fixtures & Results", path: "/fixtures-results" },
     { name: "Rankings", path: "/rankings" },
     { name: "Teams & Players", path: "/teams-players" },
     { name: "News & Highlights", path: "/news-highlights" },
+    { name: "Stadiums", path: "/stadiums" },
   ];
 
   const toggleMobileMenu = () => {
@@ -21,7 +23,7 @@ function Navbar() {
   return (
     <header className="w-full">
       {/* Top banner with tournament info - Hidden on mobile */}
-      <div className="bg-gray-100 py-2 px-4 hidden md:block">
+      <div className="bg-white py-2 px-4 hidden md:block">
         <div className="container mx-auto flex justify-center space-x-6 text-sm text-gray-700">
           <span className="bg-white px-3 py-1 rounded-full shadow-sm">Men's Cricket World Cup 2023</span>
           <span className="bg-white px-3 py-1 rounded-full shadow-sm">World Test Championship</span>
@@ -31,7 +33,7 @@ function Navbar() {
       </div>
 
       {/* Mobile Tournament Selector */}
-      <div className="bg-gray-100 py-2 px-4 md:hidden">
+      <div className="bg-white py-2 px-4 md:hidden">
         <div className="flex justify-center">
           <select className="bg-white border border-gray-300 rounded-full px-4 py-1 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500">
             <option>Men's Cricket World Cup 2023</option>
@@ -74,8 +76,23 @@ function Navbar() {
               ))}
             </div>
 
-            {/* Right Group: Social Icons */}
+            {/* Right Group: Theme Toggle + Social Icons */}
             <div className="flex items-center space-x-3 pl-12">
+              <button
+                onClick={toggleTheme}
+                className="flex items-center justify-center transition-colors duration-200"
+                aria-label="Toggle theme"
+              >
+                {isDarkMode ? (
+                  <svg className="w-7 h-7" fill="#FFFFFF" viewBox="0 0 20 20">
+                    <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 100 2h1z" />
+                  </svg>
+                ) : (
+                  <svg className="w-7 h-7" fill="#000000" viewBox="0 0 20 20">
+                    <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+                  </svg>
+                )}
+              </button>
               <a
                 href="https://www.facebook.com"
                 target="_blank"
@@ -137,9 +154,23 @@ function Navbar() {
               </NavLink>
             </div>
 
-            {/* Right Side: Social Icons + Hamburger */}
+            {/* Right Side: Theme Toggle + Social Icons + Hamburger */}
             <div className="flex items-center space-x-1.5">
-              {/* Social Icons - visible on mobile */}
+              <button
+                onClick={toggleTheme}
+                className="flex items-center justify-center transition-colors duration-200"
+                aria-label="Toggle theme"
+              >
+                {isDarkMode ? (
+                  <svg className="w-6 h-6" fill="#FFFFFF" viewBox="0 0 20 20">
+                    <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 100 2h1z" />
+                  </svg>
+                ) : (
+                  <svg className="w-6 h-6" fill="#000000" viewBox="0 0 20 20">
+                    <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+                  </svg>
+                )}
+              </button>
               <a
                 href="https://www.facebook.com"
                 target="_blank"
@@ -199,30 +230,32 @@ function Navbar() {
               </button>
             </div>
           </div>
-        </div>
 
-        {/* Mobile Menu Dropdown - Added z-50 to ensure it appears above other elements */}
-        <div className={`lg:hidden absolute top-full left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-lg transition-all duration-300 ease-in-out ${
-          isMobileMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
-        }`}>
-          <div className="container mx-auto px-4 py-4">
-            <div className="flex flex-col space-y-2">
-              {navigationLinks.map((link, idx) => (
-                <NavLink
-                  key={idx}
-                  to={link.path}
-                  onClick={() => {
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className={({ isActive }) =>
-                    `px-4 py-3 rounded-lg font-medium text-left transition-all duration-200 ${
-                      isActive ? "bg-red-500 text-white shadow-md" : "text-gray-700 hover:text-red-500 hover:bg-red-50"
-                    }`
-                  }
-                >
-                  {link.name}
-                </NavLink>
-              ))}
+          {/* Mobile Menu Dropdown - Added z-50 to ensure it appears above other elements */}
+          <div className={`lg:hidden absolute top-full left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-lg transition-all duration-300 ease-in-out ${
+            isMobileMenuOpen ? "opacity-100 visible" : "opacity-0 invisible"
+          }`}>
+            <div className="container mx-auto px-4 py-4">
+              <div className="flex flex-col space-y-2">
+                {navigationLinks.map((link, idx) => (
+                  <NavLink
+                    key={idx}
+                    to={link.path}
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className={({ isActive }) =>
+                      `px-4 py-3 rounded-lg font-medium text-left transition-all duration-200 ${
+                        isActive
+                          ? "bg-red-500 text-white shadow-md"
+                          : "text-gray-700 hover:text-red-500 hover:bg-red-50"
+                      }`
+                    }
+                  >
+                    {link.name}
+                  </NavLink>
+                ))}
+              </div>
             </div>
           </div>
         </div>

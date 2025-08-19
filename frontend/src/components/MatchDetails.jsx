@@ -39,7 +39,7 @@ const MatchDetails = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-cover bg-center bg-fixed bg-no-repeat" style={{ backgroundImage: `url(/stadium.jpg)` }}>
+      <div className="min-h-screen bg-cover bg-center bg-fixed bg-no-repeat" style={{ backgroundImage: `url(/stadrdium.jpg)` }}>
         <div className="min-h-screen bg-black bg-opacity-40 flex items-center justify-center">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             <div className="bg-white bg-opacity-15 backdrop-blur-xl rounded-3xl shadow-2xl p-8 md:p-12 animate-pulse border border-gray-200">

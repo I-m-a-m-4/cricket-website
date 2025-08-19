@@ -80,10 +80,9 @@ const TeamPage = () => {
       <div className="bg-white shadow border-b">
         <div className="container mx-auto px-6 py-8 flex flex-col md:flex-row items-center">
           <img
-            src={team.image || '/icc.jpg'}
+            src={team.image || ''}
             alt={team.name}
             className="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover shadow-lg"
-            onError={(e) => { e.target.src = '/icc.jpg'; }}
           />
           <div className="mt-4 md:mt-0 md:ml-6 text-center md:text-left">
             <h1 className="text-3xl font-bold text-gray-800">{team.name || 'Unknown Team'}</h1>
@@ -94,6 +93,23 @@ const TeamPage = () => {
       </div>
 
       <div className="container mx-auto px-6 py-8 space-y-8">
+        {/* Breadcrumb */}
+        <nav className="text-sm text-gray-600 mb-6" aria-label="Breadcrumb">
+          <ol className="list-none p-0 inline-flex">
+            <li className="flex items-center">
+              <Link to="/" className="hover:text-[#122e47]">Home</Link>
+              <span className="mx-2">/</span>
+            </li>
+            <li className="flex items-center">
+              <Link to="/teams-players" className="hover:text-[#122e47]">Teams & Players</Link>
+              <span className="mx-2">/</span>
+            </li>
+            <li className="flex items-center">
+              <span className="text-gray-900">{team.name}</span>
+            </li>
+          </ol>
+        </nav>
+
         {/* About */}
         <section className="bg-white rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">About {team.name || 'Team'}</h2>
@@ -107,10 +123,9 @@ const TeamPage = () => {
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Home Venue</h2>
           <div className="flex flex-col md:flex-row items-center gap-6">
             <img
-              src={team.venue.image_path || '/icc.jpg'}
+              src={team.venue.image_path || ''}
               alt={`${team.venue.name || 'Stadium'} image`}
               className="w-full md:w-1/3 h-64 object-cover rounded-lg"
-              onError={(e) => { e.target.src = '/icc.jpg'; }}
             />
             <div>
               <h3 className="text-lg font-medium text-gray-800">{team.venue.name || 'Unknown Venue'}</h3>
@@ -132,10 +147,9 @@ const TeamPage = () => {
                 onClick={() => setSelectedPlayer(p)}
               >
                 <img
-                  src={p.image || '/icc.jpg'}
+                  src={p.image || ''}
                   alt={p.name}
                   className="w-full h-40 object-cover"
-                  onError={(e) => { e.target.src = '/icc.jpg'; }}
                 />
                 <div className="p-4">
                   <h3 className="font-medium text-gray-900">{p.name}</h3>
@@ -155,10 +169,9 @@ const TeamPage = () => {
               {officials.map((s) => (
                 <div key={s.id} className="text-center">
                   <img
-                    src={s.image || '/icc.jpg'}
+                    src={s.image || ''}
                     alt={s.name}
                     className="w-16 h-16 rounded-full mx-auto object-cover"
-                    onError={(e) => { e.target.src = '/icc.jpg'; }}
                   />
                   <h4 className="font-medium text-gray-900 mt-2">{s.name}</h4>
                   <p className="text-sm text-gray-600">{s.role}</p>

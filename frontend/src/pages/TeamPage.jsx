@@ -8,16 +8,16 @@ const BASE_URL = process.env.NODE_ENV === 'development'
 
 const fetchTeams = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/teams`, { timeout: 10000 });
+    const response = await axios.get(`${BASE_URL}/teams?fields[teams]=id,name,image_path,country_id`, { timeout: 10000 });
     return response.data;
   } catch (error) {
     throw error;
   }
 };
 
-const fetchVenues = async () => {
+const fetchCountries = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/venues`, { timeout: 10000 });
+    const response = await axios.get(`${BASE_URL}/countries`, { timeout: 10000 });
     return response.data;
   } catch (error) {
     throw error;
@@ -26,7 +26,7 @@ const fetchVenues = async () => {
 
 export default function TeamsPage() {
   const [teams, setTeams] = useState([]);
-  const [venues, setVenues] = useState([]);
+  const [countries, setCountries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
@@ -34,9 +34,9 @@ export default function TeamsPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [teamsData, venuesData] = await Promise.all([fetchTeams(), fetchVenues()]);
+        const [teamsData, countriesData] = await Promise.all([fetchTeams(), fetchCountries()]);
         setTeams(Array.isArray(teamsData) ? teamsData : []);
-        setVenues(Array.isArray(venuesData) ? venuesData : []);
+        setCountries(Array.isArray(countriesData) ? countriesData : []);
         setLoading(false);
       } catch (err) {
         setError('Failed to load data. Please try again.');
@@ -46,9 +46,28 @@ export default function TeamsPage() {
     loadData();
   }, []);
 
+  const getCountryName = (id) => {
+    const country = countries.find(c => c.id === id);
+    return country ? country.name : '';
+  };
+
   const filteredTeams = teams.filter(team =>
     team.name.toLowerCase().includes(search.toLowerCase())
   );
+
+  // Dynamic team categorization
+  const groupedTeams = {
+    'Popular Men\'s International Teams': filteredTeams.filter(team => 
+      ['India', 'Australia', 'England', 'South Africa', 'Pakistan', 'New Zealand'].includes(getCountryName(team.country_id))
+    ),
+    'BBL Teams': filteredTeams.filter(team => 
+      ['Adelaide Strikers', 'Brisbane Heat', 'Sydney Sixers', 'Melbourne Stars'].some(name => team.name.includes(name))
+    ),
+    'Other Teams': filteredTeams.filter(team => 
+      !['India', 'Australia', 'England', 'South Africa', 'Pakistan', 'New Zealand'].includes(getCountryName(team.country_id)) &&
+      !['Adelaide Strikers', 'Brisbane Heat', 'Sydney Sixers', 'Melbourne Stars'].some(name => team.name.includes(name))
+    ),
+  };
 
   if (loading) {
     return (
@@ -82,9 +101,18 @@ export default function TeamsPage() {
   return (
     <div className="bg-gray-50 min-h-screen py-8">
       <div className="container mx-auto px-4">
-        <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center sm:text-left">
-          Teams & Players
-        </h1>
+        <nav className="text-sm text-gray-600 mb-6" aria-label="Breadcrumb">
+          <ol className="list-none p-0 inline-flex">
+            <li className="flex items-center">
+              <Link to="/" className="hover:text-[#122e47]">Home</Link>
+              <span className="mx-2">></span>
+            </li>
+            <li className="flex items-center">
+              <span className="font-bold text-gray-900">Teams & Players</span>
+            </li>
+          </ol>
+        </nav>
+        <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center sm:text-left">Teams & Players</h1>
         <input
           type="text"
           value={search}
@@ -92,60 +120,60 @@ export default function TeamsPage() {
           placeholder="Search teams..."
           className="w-full sm:w-1/2 lg:w-1/3 mb-6 p-2 border rounded"
         />
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Teams Table */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow overflow-x-auto">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="bg-gray-100">
-                    <th className="p-4 border-b">Team</th>
-                    <th className="p-4 border-b">Country</th>
-                    <th className="p-4 border-b">Founded</th>
-                    <th className="p-4 border-b">Venue</th>
-                    <th className="p-4 border-b">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredTeams.map((team) => (
-                    <tr key={team.id} className="hover:bg-gray-50">
-                      <td className="p-4 border-b font-bold">{team.name}</td>
-                      <td className="p-4 border-b">{team.country || 'N/A'}</td>
-                      <td className="p-4 border-b">N/A</td>
-                      <td className="p-4 border-b">{team.venue?.name || 'N/A'}</td>
-                      <td className="p-4 border-b">
-                        <Link
-                          to={`/team/${team.id}`}
-                          className="text-blue-600 hover:text-blue-800"
-                        >
-                          View Details
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Stadiums Sidebar */}
-          <aside className="lg:col-span-1 bg-white p-4 rounded-lg shadow">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Stadiums</h2>
-            <ul className="space-y-4">
-              {venues.map((venue, index) => (
-                <li key={index} className="flex flex-col items-center">
-                  <img
-                    src={venue.image_path || '/icc.jpg'}
-                    alt={venue.name}
-                    className="w-16 h-16 rounded-full object-cover mb-2"
-                    onError={(e) => { e.target.src = '/icc.jpg'; }}
-                  />
-                  <span className="text-gray-600">{venue.name}</span>
-                </li>
-              ))}
-            </ul>
-          </aside>
+        <div className="overflow-x-auto">
+          {Object.entries(groupedTeams).map(([category, teamsList]) => (
+            teamsList.length > 0 && (
+              <div key={category} className="mb-8">
+                <h2 className="text-2xl font-semibold text-gray-800 mb-4">{category}</h2>
+                <div className="bg-white shadow rounded-lg overflow-hidden">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-gray-100">
+                        <th className="p-3 border-b">Team</th>
+                        <th className="p-3 border-b">Country</th>
+                        <th className="p-3 border-b">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {teamsList.map((team) => (
+                        <tr key={team.id} className="hover:bg-gray-50">
+                          <td className="p-3 border-b">
+                            <div className="flex items-center">
+                              <img
+                                src={team.image_path || ''}
+                                alt={team.name}
+                                className="w-12 h-12 object-cover mr-3"
+                              />
+                              <span>{team.name}</span>
+                            </div>
+                          </td>
+                          <td className="p-3 border-b">{getCountryName(team.country_id)}</td>
+                          <td className="p-3 border-b">
+                            <Link
+                              to={`/team/${team.id}`}
+                              className="text-blue-600 hover:underline"
+                            >
+                              View Details
+                            </Link>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )
+          ))}
         </div>
+        {/* Sidebar with News */}
+        <aside className="w-full md:w-1/4 mt-8 md:mt-0 md:ml-8 bg-white p-6 rounded-lg shadow">
+          <h3 className="text-xl font-semibold text-gray-800 mb-4">Latest Cricket News</h3>
+          <ul className="space-y-4">
+            <li><a href="#" className="text-blue-600 hover:underline">India Wins Test Series Against England</a></li>
+            <li><a href="#" className="text-blue-600 hover:underline">BBL 2025 Schedule Announced</a></li>
+            <li><a href="#" className="text-blue-600 hover:underline">New Zealand Captain Injured</a></li>
+          </ul>
+        </aside>
       </div>
     </div>
   );

@@ -3,15 +3,17 @@ import HomePage from "./pages/HomePage.jsx";
 import MatchDetails from "./components/MatchDetails.jsx";
 import StandingsPage from "./pages/StandingsPage.jsx";
 import TeamPage from "./components/TeamPage.jsx";
-import TeamsPage from "./pages/TeamPage.jsx"; // Fixed import
+import TeamsPage from "./pages/TeamPage.jsx";
 import FixturesPage from "./pages/FixturesPage.jsx";
 import Navbar from "./components/Navbar.jsx";
 import Footer from "./components/Footer.jsx";
 import NewsPage from "./pages/NewsPage.jsx";
-import NewsDetail from "./components/NewsDetail.jsx"; // New component
+import NewsDetail from "./components/NewsDetail.jsx";
 import NotFoundPage from "./pages/NotFoundPage.jsx";
 import LiveScorePage from "./pages/LiveScorePage.jsx";
 import RankingPage from "./pages/RankingPage.jsx";
+import StadiumPage from "./pages/StadiumPage.jsx";
+import StadiumDetailPage from "./pages/StadiumDetailPage.jsx";
 import { ErrorBoundary } from "react-error-boundary";
 
 const CricketPage = () => <div>Cricket Page Content</div>;
@@ -46,14 +48,16 @@ function App() {
           <Route path="/match/:id" element={<MatchDetails />} />
           <Route path="/standings" element={<StandingsPage />} />
           <Route path="/team/:id" element={<TeamPage />} />
-          <Route path="/teams-players" element={<TeamsPage />} /> {/* Fixed route */}
+          <Route path="/teams-players" element={<TeamsPage />} />
           <Route path="/cricket" element={<CricketPage />} />
           <Route path="/rankings" element={<RankingPage />} />
           <Route path="/live-scores" element={<LiveScorePage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/fixtures-results" element={<FixturesPage />} />
-          <Route path="/news-highlights" element={<NewsPage />} /> {/* News list */}
-          <Route path="/news/:url" element={<NewsDetail />} /> {/* Article details */}
+          <Route path="/news-highlights" element={<NewsPage />} />
+          <Route path="/news/:url" element={<NewsDetail />} />
+          <Route path="/stadiums" element={<StadiumPage />} />
+          <Route path="/stadium/:id" element={<StadiumDetailPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
         <Footer />

@@ -17,12 +17,12 @@
     overflow-x: hidden;
     font-family: "Open Sans", sans-serif;
     height: 100vh;
-    background-image: url("/images/line.svg");
-    background-position: center;
-    background-repeat: repeat;
-    background-size: cover;
+    /* Removed background-image due to 404 error; add back if file exists */
     width: 100%;
     height: inherit;
+  }
+  body.dark {
+    background-color: #000; /* Match the dark theme background */
   }
 }
 
@@ -81,6 +81,7 @@ body::-webkit-scrollbar-thumb {
   color: white;
   text-align: center;
 }
+
 @keyframes infinite-scroll {
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }

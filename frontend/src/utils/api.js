@@ -11,15 +11,7 @@ if (import.meta.env.MODE === 'production') {
     BASE_URL = 'http://localhost:3001/api';
 }
 
-export const fetchAllMatches = async () => {
-    try {
-        const response = await axios.get(`${BASE_URL}/matches`);
-        return response.data;
-    } catch (error) {
-        // Removed console.error
-        return [];
-    }
-};
+
 
 export const fetchTeamRankings = async (type, gender) => {
     try {
@@ -57,15 +49,33 @@ export const fetchLegendsLeagueMatches = async () => {
     }
 };
 
-export const fetchLiveMatches = async () => {
-    try {
-        const response = await axios.get(`${BASE_URL}/matches/live`);
-        return response.data;
-    } catch (error) {
-        // Removed console.error
-        return [];
-    }
+// utils/api.js
+export const fetchAllMatches = async () => {
+  try {
+    const response = await axios.get(`${BASE_URL}/matches`);
+    // Map response to include innings if available
+    return response.data.map(match => ({
+      ...match,
+      innings: match.innings || [], // Fallback to empty if not present
+    }));
+  } catch (error) {
+    return [];
+  }
 };
+
+// Similarly update other fetch functions (fetchLiveMatches, etc.)
+export const fetchLiveMatches = async () => {
+  try {
+    const response = await axios.get(`${BASE_URL}/matches/live`);
+    return response.data.map(match => ({
+      ...match,
+      innings: match.innings || [],
+    }));
+  } catch (error) {
+    return [];
+  }
+};
+// Repeat for fetchUpcomingMatches, fetchAusIndMatches, fetchLegendsLeagueMatches
 
 export const fetchUpcomingMatches = async () => {
   try {
