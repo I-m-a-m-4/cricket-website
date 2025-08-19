@@ -883,46 +883,82 @@ function similarity(s1, s2) {
   return matches / longer.length;
 }
 
-
-// New endpoint for match details
+// In server.js, update the /api/matches/:id endpoint
 app.get('/api/matches/:id', async (req, res) => {
-    const { id } = req.params;
+  const { id } = req.params;
 
-    // Validate ID
-    if (!id || isNaN(id)) {
-        console.error('Invalid match ID:', id);
-        return res.status(400).json({ error: 'Invalid match ID' });
+  if (!id || isNaN(id)) {
+    console.error('Invalid match ID:', id);
+    return res.status(400).json({ error: 'Invalid match ID' });
+  }
+
+  try {
+    const response = await axios.get(`${API_BASE_URL}/fixtures/${id}`, {
+      params: {
+        api_token: API_TOKEN,
+        include: 'localteam,visitorteam,league,venue,runs,scoreboards,balls,lineup',
+      },
+      timeout: 10000,
+    });
+
+    const match = response.data.data;
+
+    if (!match) {
+      console.warn('Match not found for ID:', id);
+      return res.status(404).json({ error: 'Match not found' });
     }
 
-    try {
-        const response = await axios.get(`${API_BASE_URL}/fixtures/${id}`, {
-            params: {
-                api_token: API_TOKEN,
-                include: 'localteam,visitorteam,league,venue,runs,scoreboards,balls,lineup',
-            },
-            timeout: 10000,
-        });
+    // Enhance match data to include up to 4 innings
+    const innings = [];
+    const runs = match.runs || [];
+    const teams = [
+      match.localteam,
+      match.visitorteam,
+      // Add hypothetical teams if extending for 4-team format
+      { id: 3, name: 'Team C', code: 'TC' }, // Mock
+      { id: 4, name: 'Team D', code: 'TD' }, // Mock
+    ].slice(0, 4); // Limit to 4
 
-        const match = response.data.data;
+    teams.forEach((team, index) => {
+      const teamRuns = runs.find(r => r.team_id === team.id) || { score: 0, wickets: 0, overs: 0 };
+      innings.push({
+        team: team.name,
+        score: `${teamRuns.score || 0}/${teamRuns.wickets || 0}`,
+        overs: teamRuns.overs || 0,
+        inning: index + 1,
+      });
+    });
 
-        if (!match) {
-            console.warn('Match not found for ID:', id);
-            return res.status(404).json({ error: 'Match not found' });
-        }
-
-        res.json(match);
-    } catch (error) {
-        console.error('Error fetching match details for ID:', id, error.message);
-        if (error.response) {
-            console.error('API Response Status:', error.response.status);
-            console.error('API Response Data:', error.response.data);
-            return res.status(error.response.status).json({
-                error: 'Failed to fetch match details',
-                details: error.response.data.message || 'Unknown API error'
-            });
-        }
-        res.status(500).json({ error: 'Internal server error' });
+    res.json({
+      ...match,
+      innings, // Add innings array
+    });
+  } catch (error) {
+    console.error('Error fetching match details for ID:', id, error.message);
+    if (error.response) {
+      console.error('API Response Status:', error.response.status);
+      console.error('API Response Data:', error.response.data);
+      return res.status(error.response.status).json({
+        error: 'Failed to fetch match details',
+        details: error.response.data.message || 'Unknown API error',
+      });
     }
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/api/countries', async (req, res) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/countries`, {
+      params: {
+        api_token: API_TOKEN,
+      },
+      timeout: 10000,
+    });
+    res.json(response.data.data);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch countries' });
+  }
 });
 
 app.get('/api/venues', async (req, res) => {
@@ -938,6 +974,77 @@ app.get('/api/venues', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch venues' });
   }
 });
+
+app.get('/api/venues/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const venueResponse = await axios.get(`${API_BASE_URL}/venues/${id}`, {
+      params: {
+        api_token: API_TOKEN,
+        include: 'country', // Include country data
+      },
+      timeout: 10000,
+    });
+    const venue = venueResponse.data.data;
+    if (venue) {
+      // Add country_name to the response
+      res.json({
+        ...venue,
+        country_name: venue.country?.name || 'N/A',
+      });
+    } else {
+      res.status(404).json({ error: 'Venue not found' });
+    }
+  } catch (error) {
+    console.error('Error fetching venue:', error.message);
+    res.status(500).json({ error: 'Failed to fetch venue details' });
+  }
+});
+
+app.get('/api/venues/trending', async (req, res) => {
+  try {
+    // Fetch recent matches
+    const matchesResponse = await axios.get(`${API_BASE_URL}/fixtures`, {
+      params: {
+        api_token: API_TOKEN,
+        'filter[status]': 'Finished',
+        include: 'venue',
+        sort: '-starting_at',
+        per_page: 50, // Get recent matches
+      },
+      timeout: 10000,
+    });
+    // Count venue occurrences in recent matches
+    const venueCount = {};
+    matchesResponse.data.data.forEach(match => {
+      if (match.venue) {
+        venueCount[match.venue.id] = (venueCount[match.venue.id] || 0) + 1;
+      }
+    });
+    // Fetch all venues
+    const venuesResponse = await axios.get(`${API_BASE_URL}/venues`, {
+      params: {
+        api_token: API_TOKEN,
+        include: 'country',
+      },
+      timeout: 10000,
+    });
+    // Sort venues by match count
+    const trending = venuesResponse.data.data
+      .map(venue => ({
+        ...venue,
+        country_name: venue.country?.name || 'N/A',
+        match_count: venueCount[venue.id] || 0,
+      }))
+      .sort((a, b) => b.match_count - a.match_count)
+      .slice(0, 5); // Top 5
+    res.json(trending);
+  } catch (error) {
+    console.error('Error fetching trending venues:', error.message);
+    res.status(500).json({ error: 'Failed to fetch trending venues' });
+  }
+});
+
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
