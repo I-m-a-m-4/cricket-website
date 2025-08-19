@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
 
 const BASE_URL = process.env.NODE_ENV === 'development' 
@@ -37,54 +38,6 @@ const hardcodedVideos = {
       publishedAt: '2023-11-25T08:00:00Z',
     },
   ],
-  test: [
-    {
-      embedUrl: 'https://www.youtube.com/embed/kjQBq9PyaiA',
-      title: 'ICC Test Team Rankings Breakdown',
-      channelTitle: 'ICC',
-      description: 'Current Test team standings explained',
-      publishedAt: '2023-12-01T09:00:00Z',
-    },
-    {
-      embedUrl: 'https://www.youtube.com/embed/TQ5couH3DWo',
-      title: 'Test Cricket Rankings History',
-      channelTitle: 'Cricket Archive',
-      description: 'Evolution of Test team rankings over time',
-      publishedAt: '2023-12-02T11:00:00Z',
-    },
-  ],
-  odi: [
-    {
-      embedUrl: 'https://www.youtube.com/embed/4k6HFA5NuHI',
-      title: 'ICC ODI Player Rankings Update',
-      channelTitle: 'ICC Official',
-      description: 'Latest ODI player rankings analysis',
-      publishedAt: '2023-11-25T08:00:00Z',
-    },
-    {
-      embedUrl: 'https://www.youtube.com/embed/VbwfPqfkkMM',
-      title: 'Top Ranked ODI Players Discussion',
-      channelTitle: 'Cricket Today',
-      description: 'Expert discussion on current ODI rankings',
-      publishedAt: '2023-11-26T10:00:00Z',
-    },
-  ],
-  t20: [
-    {
-      embedUrl: 'https://www.youtube.com/embed/pFbBUcR7GGg',
-      title: 'Top T20I Run Scorers 2023',
-      channelTitle: 'Cricket Analysis',
-      description: 'Top batsmen in T20I cricket',
-      publishedAt: '2023-11-28T09:00:00Z',
-    },
-    {
-      embedUrl: 'https://www.youtube.com/embed/Gvw8xtvlZ5w',
-      title: 'T20I Century Makers Compilation',
-      channelTitle: 'ICC Highlights',
-      description: 'All centuries from T20I matches in 2023',
-      publishedAt: '2023-11-29T11:00:00Z',
-    },
-  ],
 };
 
 const fetchTopHeadlines = async (lang = 'en', country = '', q = 'cricket') => {
@@ -99,40 +52,88 @@ const fetchTopHeadlines = async (lang = 'en', country = '', q = 'cricket') => {
   }
 };
 
+const fetchTrendingNews = async (lang = 'en', country = '') => {
+  try {
+    const response = await axios.get(`${BASE_URL}/news/trending`, {
+      params: { lang, country, max: 5 },
+      timeout: 10000,
+    });
+    return response.data.articles || [];
+  } catch (error) {
+    throw { error, retryAfter: error.response?.headers['retry-after'] || 60 };
+  }
+};
+
 export default function NewsPage() {
   const [topHeadlines, setTopHeadlines] = useState([]);
+  const [trendingNews, setTrendingNews] = useState([]);
   const [lang, setLang] = useState('en');
   const [country, setCountry] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeDot, setActiveDot] = useState(0);
+  const videoCarouselRef = useRef(null);
 
   const loadTopHeadlines = useCallback(async () => {
     try {
       const data = await fetchTopHeadlines(lang, country, searchQuery || 'cricket');
       setTopHeadlines(data);
       setError(null);
-      setLoading(false);
     } catch (err) {
       setError(err.error.response?.status === 429
         ? `Rate limit exceeded. Please try again in ${err.retryAfter} seconds.`
         : err.error.message.includes('ECONNREFUSED') || err.error.message.includes('ECONNRESET')
         ? 'Cannot connect to the server. Please check if the server is running.'
         : 'Failed to load top headlines. Please try again.');
-      setLoading(false);
     }
   }, [lang, country, searchQuery]);
 
+  const loadTrendingNews = useCallback(async () => {
+    try {
+      const data = await fetchTrendingNews(lang, country);
+      setTrendingNews(data);
+    } catch (err) {
+      console.warn('Failed to fetch trending news:', err.error.message);
+      setTrendingNews(err.error.response?.data?.articles || []);
+    }
+  }, [lang, country]);
+
   useEffect(() => {
     setLoading(true);
-    loadTopHeadlines();
-  }, [lang, country, searchQuery, loadTopHeadlines]);
+    Promise.all([loadTopHeadlines(), loadTrendingNews()])
+      .finally(() => setLoading(false));
+  }, [loadTopHeadlines, loadTrendingNews]);
 
   const handleRetry = () => {
     setError(null);
     setLoading(true);
-    loadTopHeadlines();
+    Promise.all([loadTopHeadlines(), loadTrendingNews()])
+      .finally(() => setLoading(false));
   };
+
+  const handleScroll = () => {
+    if (videoCarouselRef.current) {
+      const scrollLeft = videoCarouselRef.current.scrollLeft;
+      const cardWidth = videoCarouselRef.current.querySelector('.snap-center')?.offsetWidth || 250;
+      const newActiveDot = Math.floor(scrollLeft / cardWidth);
+      setActiveDot(newActiveDot);
+    }
+  };
+
+  const scrollToCard = (dotIndex) => {
+    if (videoCarouselRef.current) {
+      const cardWidth = videoCarouselRef.current.querySelector('.snap-center')?.offsetWidth || 250;
+      const cardsPerView = window.innerWidth >= 1024 ? 3 : window.innerWidth >= 768 ? 2 : 1;
+      const scrollPosition = dotIndex * cardWidth * cardsPerView;
+      videoCarouselRef.current.scrollTo({
+        left: scrollPosition,
+        behavior: 'smooth',
+      });
+    }
+  };
+
+  const totalDots = Math.ceil(hardcodedVideos.featured.length / (window.innerWidth >= 1024 ? 3 : window.innerWidth >= 768 ? 2 : 1)) || 1;
 
   return (
     <div className="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
@@ -150,16 +151,29 @@ export default function NewsPage() {
         <meta name="twitter:card" content="summary_large_image" />
       </head>
 
-      {/* Hero Section */}
-      <header className="relative bg-cover bg-center h-64 md:h-96" style={{ backgroundImage: 'url(/newcr.jpg)' }}>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/70 flex items-center justify-center">
-          <h1 className="text-3xl md:text-5xl font-extrabold text-white text-center drop-shadow-lg">
-            Latest Cricket News & Headlines
-          </h1>
-        </div>
-      </header>
-
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        {/* Breadcrumbs */}
+        <nav className="text-base text-[#122537] mb-6 font-medium" aria-label="Breadcrumb">
+          <ol className="list-none p-0 inline-flex items-center space-x-2">
+            <li className="flex items-center">
+              <Link to="/" className="hover:text-red-500 transition-colors">Home</Link>
+              <span className="mx-2 text-[#122537]">&gt;</span>
+            </li>
+            <li className="flex items-center">
+              <span className="font-semibold text-[#122537]">Cricket News</span>
+            </li>
+          </ol>
+        </nav>
+
+        {/* Hero Section */}
+        <header className="relative bg-cover bg-center h-64 md:h-96" style={{ backgroundImage: 'url(/newcr.jpg)' }}>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/70 flex items-center justify-center">
+            <h1 className="text-3xl md:text-5xl font-extrabold text-white text-center drop-shadow-lg">
+              Latest Cricket News & Headlines
+            </h1>
+          </div>
+        </header>
+
         {/* Filters and Search Bar */}
         <section className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 mb-8 lg:mb-12" aria-label="News Filters">
           <form className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-center" onSubmit={(e) => { e.preventDefault(); loadTopHeadlines(); }}>
@@ -190,7 +204,7 @@ export default function NewsPage() {
                 <option value="au">Australia</option>
                 <option value="gb">United Kingdom</option>
               </select>
-              <svg className="absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 w-5 sm:w-6 h-5 sm:h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 w-5 sm:w-6 h-5 sm:h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
               </svg>
             </div>
@@ -248,20 +262,21 @@ export default function NewsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
             {/* Top Headlines Grid */}
             <section className="lg:col-span-3" aria-label="Top Cricket Headlines">
+              <h2 className="text-2xl font-bold text-[#122537] mb-6">Top Headlines</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
                 {topHeadlines.map((article, index) => (
                   <article
                     key={index}
-                    className="bg-white transition duration-300"
+                    className="bg-white rounded-2xl shadow-lg transition duration-300 hover:shadow-xl"
                   >
                     <img
                       src={article.image || '/icc.jpg'}
                       alt={article.title}
-                      className="w-full h-48 sm:h-64 object-cover"
+                      className="w-full h-48 sm:h-64 object-cover rounded-t-2xl"
                       onError={(e) => { e.target.src = '/icc.jpg'; }}
                     />
                     <div className="p-4 sm:p-6">
-                      <h2 className="text-xl sm:text-2xl font-bold text-red-500 line-clamp-2 mb-2 sm:mb-3">
+                      <h2 className="text-xl sm:text-2xl font-bold text-red-600 line-clamp-2 mb-2 sm:mb-3">
                         {article.title}
                       </h2>
                       <p className="text-sm sm:text-base text-gray-600 mb-2 sm:mb-3 flex items-center">
@@ -281,15 +296,61 @@ export default function NewsPage() {
               </div>
             </section>
 
-            {/* YouTube Videos Sidebar */}
-            <section className="lg:col-span-1 lg:order-first bg-white shadow-lg rounded-2xl p-4 sm:p-6 h-auto" aria-label="Cricket Highlight Videos">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 border-b-2 border-red-600 pb-2">Highlight Videos</h2>
-              <div className="grid grid-cols-1 gap-4 sm:gap-6">
-                {hardcodedVideos.featured.map((video, index) => (
-                  <article
-                    key={index}
-                    className="overflow-hidden"
-                  >
+            {/* Trending News Sidebar */}
+            <section className="lg:col-span-1 lg:order-first bg-white rounded-2xl shadow-lg p-4 sm:p-6 max-h-fit" aria-label="Trending Cricket News">
+              <h2 className="text-xl sm:text-2xl font-bold text-[#122537] mb-4 sm:mb-6 border-b-2 border-red-600 pb-2">Trending News</h2>
+              <div className="space-y-4 sm:space-y-6">
+                {trendingNews.length > 0 ? (
+                  trendingNews.map((article, index) => (
+                    <article
+                      key={index}
+                      className="bg-white rounded-xl shadow-md transition duration-300 hover:shadow-lg"
+                    >
+                      <a href={article.url} target="_blank" rel="noopener noreferrer" className="block">
+                        <img
+                          src={article.image || '/icc.jpg'}
+                          alt={article.title}
+                          className="w-full h-24 sm:h-32 object-cover rounded-t-xl"
+                          onError={(e) => { e.target.src = '/icc.jpg'; }}
+                        />
+                        <div className="p-3 sm:p-4">
+                          <h3 className="text-base sm:text-lg font-bold text-[#122537] hover:text-red-600 line-clamp-2 mb-1 sm:mb-2">
+                            {article.title}
+                          </h3>
+                          <p className="text-xs sm:text-sm text-gray-600 mb-1 sm:mb-2">
+                            {article.source} •{' '}
+                            {new Date(article.publishedAt).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                            })}
+                          </p>
+                          <p className="text-gray-700 line-clamp-2 text-xs sm:text-sm">{article.description}</p>
+                        </div>
+                      </a>
+                    </article>
+                  ))
+                ) : (
+                  <p className="text-gray-700 text-sm sm:text-base">No trending news available.</p>
+                )}
+              </div>
+            </section>
+          </div>
+        )}
+
+        {/* YouTube Videos Carousel */}
+        {!loading && !error && (
+          <section className="mt-8 lg:mt-12" aria-label="Cricket Highlight Videos">
+            <h2 className="text-2xl font-bold text-[#122537] mb-6">Highlight Videos</h2>
+            <div
+              ref={videoCarouselRef}
+              onScroll={handleScroll}
+              className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scroll-smooth"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              {hardcodedVideos.featured.map((video, index) => (
+                <div key={index} className="snap-center flex-shrink-0 w-full sm:w-1/2 lg:w-1/3">
+                  <article className="bg-white rounded-2xl shadow-lg transition duration-300 hover:shadow-xl">
                     <a
                       href={`https://www.youtube.com/watch?v=${video.embedUrl.split('embed/')[1].split('?')[0]}`}
                       target="_blank"
@@ -300,7 +361,7 @@ export default function NewsPage() {
                         <img
                           src={`https://i.ytimg.com/vi/${video.embedUrl.split('embed/')[1].split('?')[0]}/hqdefault.jpg`}
                           alt={`${video.title} thumbnail`}
-                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                          className="w-full h-full object-cover rounded-t-2xl hover:scale-105 transition-transform duration-300"
                           onError={(e) => {
                             e.target.src = 'https://via.placeholder.com/480x270?text=YouTube+Video';
                           }}
@@ -322,8 +383,8 @@ export default function NewsPage() {
                           </div>
                         </div>
                       </div>
-                      <div className="p-2 sm:p-4">
-                        <h3 className="text-lg sm:text-xl font-bold text-gray-900 hover:text-red-600 line-clamp-2 mb-1 sm:mb-2">
+                      <div className="p-4 sm:p-6">
+                        <h3 className="text-lg sm:text-xl font-bold text-[#122537] hover:text-red-600 line-clamp-2 mb-1 sm:mb-2">
                           {video.title}
                         </h3>
                         <p className="text-xs sm:text-sm text-gray-600 mb-1 sm:mb-2">
@@ -338,10 +399,23 @@ export default function NewsPage() {
                       </div>
                     </a>
                   </article>
+                </div>
+              ))}
+            </div>
+            {hardcodedVideos.featured.length > 0 && (
+              <div className="flex justify-center gap-2 mt-4">
+                {Array.from({ length: totalDots }).map((_, index) => (
+                  <div
+                    key={index}
+                    className={`w-3 h-3 rounded-full cursor-pointer transition-colors duration-200 ${
+                      activeDot === index ? 'bg-red-500' : 'bg-gray-300'
+                    }`}
+                    onClick={() => scrollToCard(index)}
+                  ></div>
                 ))}
               </div>
-            </section>
-          </div>
+            )}
+          </section>
         )}
 
         {/* No Headlines */}

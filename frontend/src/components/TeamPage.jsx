@@ -10,7 +10,7 @@ const BASE_URL = process.env.NODE_ENV === 'development'
 export const fetchTeamDetails = async (id) => {
   if (!id || isNaN(id)) throw new Error('Invalid team ID');
   try {
-    const response = await axios.get(`${BASE_URL}/teams/${id}`, { timeout: 10000 });
+    const response = await axios.get(`${BASE_URL}/teams/${id}?fields[teams]=id,name,image_path&include=country,squad,fixtures,results`, { timeout: 10000 });
     return response.data;
   } catch (error) {
     throw error;
@@ -39,6 +39,7 @@ const TeamPage = () => {
         const res = await fetchTeamDetails(id);
         setData(res);
       } catch (err) {
+        console.error('Error fetching team details:', err);
       } finally {
         setLoading(false);
       }
@@ -72,7 +73,8 @@ const TeamPage = () => {
     );
   }
 
-  const { team, players = [], officials = [], recentMatches = [], upcoming = [] } = data;
+  // Destructure directly from data, not nested team
+  const { id: teamId, name, image, country, founded, venue, description, players = [], officials = [], recentMatches = [], upcoming = [] } = data;
 
   return (
     <div className="team-page bg-gray-50 min-h-screen">
@@ -80,14 +82,15 @@ const TeamPage = () => {
       <div className="bg-white shadow border-b">
         <div className="container mx-auto px-6 py-8 flex flex-col md:flex-row items-center">
           <img
-            src={team.image || ''}
-            alt={team.name}
+            src={image || '/icc.jpg'}
+            alt={name}
             className="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover shadow-lg"
+            onError={(e) => { e.target.src = '/icc.jpg'; }}
           />
           <div className="mt-4 md:mt-0 md:ml-6 text-center md:text-left">
-            <h1 className="text-3xl font-bold text-gray-800">{team.name || 'Unknown Team'}</h1>
-            <p className="text-lg text-gray-600">{team.country || 'Unknown'} • Founded: {team.founded || 'N/A'}</p>
-            <p className="text-sm text-gray-500">Home: {team.venue.name || 'Unknown'}, {team.venue.city || 'Unknown'}</p>
+            <h1 className="text-3xl font-bold text-gray-800">{name || 'Unknown Team'}</h1>
+            <p className="text-lg text-gray-600">{country || 'Unknown'} • Founded: {founded || 'N/A'}</p>
+            <p className="text-sm text-gray-500">Home: {venue?.name || 'Unknown'}, {venue?.city || 'Unknown'}</p>
           </div>
         </div>
       </div>
@@ -105,16 +108,16 @@ const TeamPage = () => {
               <span className="mx-2">/</span>
             </li>
             <li className="flex items-center">
-              <span className="text-gray-900">{team.name}</span>
+              <span className="text-gray-900">{name}</span>
             </li>
           </ol>
         </nav>
 
         {/* About */}
         <section className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">About {team.name || 'Team'}</h2>
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">About {name || 'Team'}</h2>
           <p className="text-gray-700 leading-relaxed">
-            {team.description || `The ${team.name || 'team'} are a professional cricket team based in ${team.venue.city || 'Unknown'}.`}
+            {description || `The ${name || 'team'} are a professional cricket team based in ${venue?.city || 'Unknown'}.`}
           </p>
         </section>
 
@@ -123,15 +126,16 @@ const TeamPage = () => {
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Home Venue</h2>
           <div className="flex flex-col md:flex-row items-center gap-6">
             <img
-              src={team.venue.image_path || ''}
-              alt={`${team.venue.name || 'Stadium'} image`}
+              src={venue?.image_path || '/icc.jpg'}
+              alt={`${venue?.name || 'Stadium'} image`}
               className="w-full md:w-1/3 h-64 object-cover rounded-lg"
+              onError={(e) => { e.target.src = '/icc.jpg'; }}
             />
             <div>
-              <h3 className="text-lg font-medium text-gray-800">{team.venue.name || 'Unknown Venue'}</h3>
-              <p className="text-gray-600">Location: {team.venue.city || 'Unknown City'}</p>
-              <p className="text-gray-600">Capacity: {team.venue.capacity || 'N/A'}</p>
-              <p className="text-gray-600">Description: {team.venue.description || 'No description available.'}</p>
+              <h3 className="text-lg font-medium text-gray-800">{venue?.name || 'Unknown Venue'}</h3>
+              <p className="text-gray-600">Location: {venue?.city || 'Unknown City'}</p>
+              <p className="text-gray-600">Capacity: {venue?.capacity || 'N/A'}</p>
+              <p className="text-gray-600">Description: {venue?.description || 'No description available.'}</p>
             </div>
           </div>
         </section>
@@ -147,9 +151,10 @@ const TeamPage = () => {
                 onClick={() => setSelectedPlayer(p)}
               >
                 <img
-                  src={p.image || ''}
+                  src={p.image || '/icc.jpg'}
                   alt={p.name}
                   className="w-full h-40 object-cover"
+                  onError={(e) => { e.target.src = '/icc.jpg'; }}
                 />
                 <div className="p-4">
                   <h3 className="font-medium text-gray-900">{p.name}</h3>
@@ -169,9 +174,10 @@ const TeamPage = () => {
               {officials.map((s) => (
                 <div key={s.id} className="text-center">
                   <img
-                    src={s.image || ''}
+                    src={s.image || '/icc.jpg'}
                     alt={s.name}
                     className="w-16 h-16 rounded-full mx-auto object-cover"
+                    onError={(e) => { e.target.src = '/icc.jpg'; }}
                   />
                   <h4 className="font-medium text-gray-900 mt-2">{s.name}</h4>
                   <p className="text-sm text-gray-600">{s.role}</p>
