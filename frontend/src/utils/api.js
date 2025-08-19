@@ -49,6 +49,21 @@ export const fetchLegendsLeagueMatches = async () => {
     }
 };
 
+
+// Fetch upcoming schedule
+export const fetchSchedule = async () => {
+  try {
+    const response = await axios.get(`${BASE_URL}/schedule`, {
+      params: { upcoming: true, max: 20 }, // Fetch up to 20 upcoming matches
+      timeout: 10000,
+    });
+    return response.data.matches || [];
+  } catch (error) {
+    console.error('Failed to fetch schedule:', error);
+    throw error;
+  }
+};
+
 // utils/api.js
 export const fetchAllMatches = async () => {
   try {

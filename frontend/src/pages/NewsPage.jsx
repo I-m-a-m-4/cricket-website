@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
@@ -64,6 +65,76 @@ const fetchTrendingNews = async (lang = 'en', country = '') => {
   }
 };
 
+// News Ticker Component
+const NewsTicker = ({ headlines, loading }) => {
+  const tickerContent = loading
+    ? 'Latest cricket news loading...'
+    : headlines.length > 0
+    ? headlines.map((article) => article.title).join(' >> ')
+    : 'No headlines available. Check back soon!';
+
+  return (
+    <div className="w-full bg-[#c54448] h-8 overflow-hidden text-center flex items-center">
+      <div
+        className="whitespace-nowrap text-white text-sm sm:text-base font-normal animate-marquee hover:pause"
+        aria-label="Latest news headlines ticker"
+      >
+        {headlines.length > 0 ? (
+          headlines.map((article, index) => (
+            <span key={index}>
+              <a
+                href={article.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-red-200 transition-colors mx-4"
+              >
+                {article.title}
+              </a>
+              {index < headlines.length - 1 && <span className="text-yellow-300 mx-4">>></span>}
+            </span>
+          ))
+        ) : (
+          <span>{tickerContent}</span>
+        )}
+        {/* Duplicate content for infinite loop */}
+        {headlines.length > 0 && (
+          <span className="ml-8">
+            {headlines.map((article, index) => (
+              <span key={`dup-${index}`}>
+                <a
+                  href={article.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-red-200 transition-colors mx-4"
+                >
+                  {article.title}
+                </a>
+                {index < headlines.length - 1 && <span className="text-yellow-300 mx-4">>></span>}
+              </span>
+            ))}
+          </span>
+        )}
+      </div>
+      <style jsx>{`
+        @keyframes marquee {
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            transform: translateX(-50%);
+          }
+        }
+        .animate-marquee {
+          animation: marquee ${headlines.length > 0 ? headlines.length * 6 : 15}s linear infinite;
+        }
+        .animate-marquee:hover {
+          animation-play-state: paused;
+        }
+      `}</style>
+    </div>
+  );
+};
+
 export default function NewsPage() {
   const [topHeadlines, setTopHeadlines] = useState([]);
   const [trendingNews, setTrendingNews] = useState([]);
@@ -81,11 +152,13 @@ export default function NewsPage() {
       setTopHeadlines(data);
       setError(null);
     } catch (err) {
-      setError(err.error.response?.status === 429
-        ? `Rate limit exceeded. Please try again in ${err.retryAfter} seconds.`
-        : err.error.message.includes('ECONNREFUSED') || err.error.message.includes('ECONNRESET')
-        ? 'Cannot connect to the server. Please check if the server is running.'
-        : 'Failed to load top headlines. Please try again.');
+      setError(
+        err.error.response?.status === 429
+          ? `Rate limit exceeded. Please try again in ${err.retryAfter} seconds.`
+          : err.error.message.includes('ECONNREFUSED') || err.error.message.includes('ECONNRESET')
+          ? 'Cannot connect to the server. Please check if the server is running.'
+          : 'Failed to load top headlines. Please try again.'
+      );
     }
   }, [lang, country, searchQuery]);
 
@@ -101,15 +174,13 @@ export default function NewsPage() {
 
   useEffect(() => {
     setLoading(true);
-    Promise.all([loadTopHeadlines(), loadTrendingNews()])
-      .finally(() => setLoading(false));
+    Promise.all([loadTopHeadlines(), loadTrendingNews()]).finally(() => setLoading(false));
   }, [loadTopHeadlines, loadTrendingNews]);
 
   const handleRetry = () => {
     setError(null);
     setLoading(true);
-    Promise.all([loadTopHeadlines(), loadTrendingNews()])
-      .finally(() => setLoading(false));
+    Promise.all([loadTopHeadlines(), loadTrendingNews()]).finally(() => setLoading(false));
   };
 
   const handleScroll = () => {
@@ -140,23 +211,34 @@ export default function NewsPage() {
       {/* SEO Meta Tags */}
       <head>
         <title>Latest Cricket News & Top Headlines | Cricket App</title>
-        <meta name="description" content="Stay updated with the latest cricket news, top headlines, and updates from around the world. Explore breaking news, match highlights, and more." />
+        <meta
+          name="description"
+          content="Stay updated with the latest cricket news, top headlines, and updates from around the world. Explore breaking news, match highlights, and more."
+        />
         <meta name="keywords" content="cricket news, cricket headlines, cricket updates, cricket app, sports news" />
         <meta name="robots" content="index, follow" />
         <meta property="og:title" content="Latest Cricket News & Top Headlines | Cricket App" />
-        <meta property="og:description" content="Get the latest cricket news and top headlines. Stay informed with breaking news, match updates, and more." />
+        <meta
+          property="og:description"
+          content="Get the latest cricket news and top headlines. Stay informed with breaking news, match updates, and more."
+        />
         <meta property="og:image" content="/stadium.jpg" />
         <meta property="og:url" content="https://your-frontend-url/news" />
         <meta property="og:type" content="website" />
         <meta name="twitter:card" content="summary_large_image" />
       </head>
 
+      {/* News Ticker */}
+      <NewsTicker headlines={topHeadlines} loading={loading} />
+
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Breadcrumbs */}
-        <nav className="text-base text-[#122537] mb-6 font-medium" aria-label="Breadcrumb">
+        <nav className="text-base text-[#122537] mb-6 mt-4 font-medium" aria-label="Breadcrumb">
           <ol className="list-none p-0 inline-flex items-center space-x-2">
             <li className="flex items-center">
-              <Link to="/" className="hover:text-red-500 transition-colors">Home</Link>
+              <Link to="/" className="hover:text-red-500 transition-colors">
+                Home
+              </Link>
               <span className="mx-2 text-[#122537]">&gt;</span>
             </li>
             <li className="flex items-center">
@@ -176,7 +258,13 @@ export default function NewsPage() {
 
         {/* Filters and Search Bar */}
         <section className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 mb-8 lg:mb-12" aria-label="News Filters">
-          <form className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-center" onSubmit={(e) => { e.preventDefault(); loadTopHeadlines(); }}>
+          <form
+            className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-center"
+            onSubmit={(e) => {
+              e.preventDefault();
+              loadTopHeadlines();
+            }}
+          >
             <div className="relative w-full sm:w-48">
               <select
                 value={lang}
@@ -188,7 +276,12 @@ export default function NewsPage() {
                 <option value="hi">Hindi</option>
                 <option value="es">Spanish</option>
               </select>
-              <svg className="absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 w-5 sm:w-6 h-5 sm:h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                className="absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 w-5 sm:w-6 h-5 sm:h-6 text-gray-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
               </svg>
             </div>
@@ -204,7 +297,12 @@ export default function NewsPage() {
                 <option value="au">Australia</option>
                 <option value="gb">United Kingdom</option>
               </select>
-              <svg className="absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 w-5 sm:w-6 h-5 sm:h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 24">
+              <svg
+                className="absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 w-5 sm:w-6 h-5 sm:h-6 text-gray-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
               </svg>
             </div>
@@ -217,7 +315,12 @@ export default function NewsPage() {
                 className="w-full p-3 sm:p-4 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600 transition duration-300 hover:bg-gray-50 text-gray-800 font-semibold"
                 aria-label="Search news"
               />
-              <svg className="absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 w-5 sm:w-6 h-5 sm:h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                className="absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 w-5 sm:w-6 h-5 sm:h-6 text-gray-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
@@ -233,14 +336,16 @@ export default function NewsPage() {
         {/* Loading State */}
         {loading && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Array(15).fill().map((_, i) => (
-              <div key={i} className="animate-pulse bg-white rounded-xl p-6">
-                <div className="h-48 sm:h-64 bg-gray-200 rounded-lg mb-4"></div>
-                <div className="h-6 bg-gray-200 rounded mb-2"></div>
-                <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                <div className="h-4 bg-gray-200 rounded"></div>
-              </div>
-            ))}
+            {Array(15)
+              .fill()
+              .map((_, i) => (
+                <div key={i} className="animate-pulse bg-white rounded-xl p-6">
+                  <div className="h-48 sm:h-64 bg-gray-200 rounded-lg mb-4"></div>
+                  <div className="h-6 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded"></div>
+                </div>
+              ))}
           </div>
         )}
 
@@ -269,36 +374,56 @@ export default function NewsPage() {
                     key={index}
                     className="bg-white rounded-2xl shadow-lg transition duration-300 hover:shadow-xl"
                   >
-                    <img
-                      src={article.image || '/icc.jpg'}
-                      alt={article.title}
-                      className="w-full h-48 sm:h-64 object-cover rounded-t-2xl"
-                      onError={(e) => { e.target.src = '/icc.jpg'; }}
-                    />
-                    <div className="p-4 sm:p-6">
-                      <h2 className="text-xl sm:text-2xl font-bold text-red-600 line-clamp-2 mb-2 sm:mb-3">
-                        {article.title}
-                      </h2>
-                      <p className="text-sm sm:text-base text-gray-600 mb-2 sm:mb-3 flex items-center">
-                        <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        {article.source} • {new Date(article.publishedAt).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })}
-                      </p>
-                      <p className="text-gray-700 line-clamp-3 text-sm sm:text-base">{article.description}</p>
-                    </div>
+                    <a href={article.url} target="_blank" rel="noopener noreferrer">
+                      <img
+                        src={article.image || '/icc.jpg'}
+                        alt={article.title}
+                        className="w-full h-48 sm:h-64 object-cover rounded-t-2xl"
+                        onError={(e) => {
+                          e.target.src = '/icc.jpg';
+                        }}
+                      />
+                      <div className="p-4 sm:p-6">
+                        <h2 className="text-xl sm:text-2xl font-bold text-red-600 line-clamp-2 mb-2 sm:mb-3">
+                          {article.title}
+                        </h2>
+                        <p className="text-sm sm:text-base text-gray-600 mb-2 sm:mb-3 flex items-center">
+                          <svg
+                            className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-gray-500"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                          {article.source} •{' '}
+                          {new Date(article.publishedAt).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })}
+                        </p>
+                        <p className="text-gray-700 line-clamp-3 text-sm sm:text-base">{article.description}</p>
+                      </div>
+                    </a>
                   </article>
                 ))}
               </div>
             </section>
 
             {/* Trending News Sidebar */}
-            <section className="lg:col-span-1 lg:order-first bg-white rounded-2xl shadow-lg p-4 sm:p-6 max-h-fit" aria-label="Trending Cricket News">
-              <h2 className="text-xl sm:text-2xl font-bold text-[#122537] mb-4 sm:mb-6 border-b-2 border-red-600 pb-2">Trending News</h2>
+            <section
+              className="lg:col-span-1 lg:order-first bg-white rounded-2xl shadow-lg p-4 sm:p-6 max-h-fit"
+              aria-label="Trending Cricket News"
+            >
+              <h2 className="text-xl sm:text-2xl font-bold text-[#122537] mb-4 sm:mb-6 border-b-2 border-red-600 pb-2">
+                Trending News
+              </h2>
               <div className="space-y-4 sm:space-y-6">
                 {trendingNews.length > 0 ? (
                   trendingNews.map((article, index) => (
@@ -311,7 +436,9 @@ export default function NewsPage() {
                           src={article.image || '/icc.jpg'}
                           alt={article.title}
                           className="w-full h-24 sm:h-32 object-cover rounded-t-xl"
-                          onError={(e) => { e.target.src = '/icc.jpg'; }}
+                          onError={(e) => {
+                            e.target.src = '/icc.jpg';
+                          }}
                         />
                         <div className="p-3 sm:p-4">
                           <h3 className="text-base sm:text-lg font-bold text-[#122537] hover:text-red-600 line-clamp-2 mb-1 sm:mb-2">

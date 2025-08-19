@@ -68,7 +68,7 @@ function MatchCard({ match, activeFilter }) {
         <div className="flex items-center justify-between mb-2">
           <span className={`px-2 py-1 rounded text-xs font-semibold ${getStatusColor(matchType)}`}>
             {matchType}
-          </span>
+          </span>z
           <span className="text-xs text-[#122537] truncate">{match.league?.name || 'Cricket Match'}</span>
         </div>
         <div className="flex items-center justify-between">

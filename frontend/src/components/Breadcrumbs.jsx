@@ -21,7 +21,7 @@ function Breadcrumbs() {
               <li key={name} className="flex items-center">
                 <span className="mx-2">/</span>
                 {isLast ? (
-                  <span className="text-gray-500 dark:text-gray-400">{name}</span>
+                  <span className="font-bold text-gray-900 dark:text-gray-100">{name}</span>
                 ) : (
                   <Link to={routeTo} className="hover:text-red-500 dark:hover:text-red-400">{name}</Link>
                 )}
