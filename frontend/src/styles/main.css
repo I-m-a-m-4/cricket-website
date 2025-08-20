@@ -110,3 +110,13 @@ body::-webkit-scrollbar-thumb {
 .translate-y-5 {
   transform: translateY(1.25rem);
 }
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #2d3748;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #ed8936;
+  border-radius: 4px;
+}

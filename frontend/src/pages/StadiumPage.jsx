@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Fragment } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import MatchCardSkeleton from '../components/MatchCardSkeleton';
 import { useTheme } from '../context/ThemeContext';
+import { Menu, Transition } from '@headlessui/react';
+import { ChevronDownIcon } from '@heroicons/react/20/solid';
 
 const BASE_URL = process.env.NODE_ENV === 'development' 
   ? 'http://localhost:3001/api' 
@@ -68,7 +70,7 @@ function MatchCard({ match, activeFilter }) {
         <div className="flex items-center justify-between mb-2">
           <span className={`px-2 py-1 rounded text-xs font-semibold ${getStatusColor(matchType)}`}>
             {matchType}
-          </span>z
+          </span>
           <span className="text-xs text-[#122537] truncate">{match.league?.name || 'Cricket Match'}</span>
         </div>
         <div className="flex items-center justify-between">
@@ -96,6 +98,11 @@ function MatchCard({ match, activeFilter }) {
       </div>
     </Link>
   );
+}
+
+// Utility function for classNames
+function classNames(...classes) {
+  return classes.filter(Boolean).join(' ');
 }
 
 export default function StadiumPage() {
@@ -178,7 +185,6 @@ export default function StadiumPage() {
   const scrollToCard = (dotIndex) => {
     if (matchCarouselRef.current) {
       const cardWidth = matchCarouselRef.current.querySelector('.snap-center')?.offsetWidth || 250;
-      // Adjust scroll position based on screen size
       const cardsPerView = window.innerWidth >= 1024 ? 3 : window.innerWidth >= 768 ? 2 : 1;
       const scrollPosition = dotIndex * cardWidth * cardsPerView;
       matchCarouselRef.current.scrollTo({
@@ -295,16 +301,58 @@ export default function StadiumPage() {
             placeholder="Search stadiums by name or city..."
             className="w-full sm:w-1/3 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
           />
-          <select
-            value={selectedCountry}
-            onChange={(e) => setSelectedCountry(e.target.value)}
-            className="w-full sm:w-1/4 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
-          >
-            <option value="">All Countries</option>
-            {countries.map((country) => (
-              <option key={country.id} value={country.id}>{country.name}</option>
-            ))}
-          </select>
+          <Menu as="div" className="relative inline-block text-left w-full sm:w-1/4">
+            <div>
+              <Menu.Button className="inline-flex w-full justify-between items-center rounded-md bg-gradient-to-r from-red-500 to-orange-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-600">
+                {selectedCountry
+                  ? countries.find((country) => country.id === parseInt(selectedCountry))?.name || 'Select a country'
+                  : 'All Countries'}
+                <ChevronDownIcon className="-mr-1 ml-2 h-5 w-5" aria-hidden="true" />
+              </Menu.Button>
+            </div>
+            <Transition
+              as={Fragment}
+              enter="transition ease-out duration-100"
+              enterFrom="transform opacity-0 scale-95"
+              enterTo="transform opacity-100 scale-100"
+              leave="transition ease-in duration-75"
+              leaveFrom="transform opacity-100 scale-100"
+              leaveTo="transform opacity-0 scale-95"
+            >
+              <Menu.Items className="absolute right-0 z-20 mt-2 w-full origin-top-right rounded-md bg-gray-800 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none max-h-60 overflow-y-auto">
+                <div className="py-1">
+                  <Menu.Item>
+                    {({ active }) => (
+                      <button
+                        onClick={() => setSelectedCountry('')}
+                        className={classNames(
+                          active ? 'bg-gray-700 text-white' : 'text-gray-300',
+                          'block px-4 py-2 text-sm w-full text-left'
+                        )}
+                      >
+                        All Countries
+                      </button>
+                    )}
+                  </Menu.Item>
+                  {countries.map((country) => (
+                    <Menu.Item key={country.id}>
+                      {({ active }) => (
+                        <button
+                          onClick={() => setSelectedCountry(country.id)}
+                          className={classNames(
+                            active ? 'bg-gray-700 text-white' : 'text-gray-300',
+                            'block px-4 py-2 text-sm w-full text-left'
+                          )}
+                        >
+                          {country.name}
+                        </button>
+                      )}
+                    </Menu.Item>
+                  ))}
+                </div>
+              </Menu.Items>
+            </Transition>
+          </Menu>
           <div className="flex gap-2">
             <button
               onClick={() => setHasFloodlight(true)}

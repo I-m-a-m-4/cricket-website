@@ -49,14 +49,7 @@ function Navbar() {
         { name: "News Tab", path: "/series/news-tab" },
       ],
     },
-    {
-      name: "Stats",
-      path: "/stats",
-      sublinks: [
-        { name: "Team Rankings", path: "/stats/team-rankings" },
-        { name: "Player Career Stats", path: "/stats/player-career-stats" },
-      ],
-    },
+ 
     { name: "Teams & Players", path: "/teams-players" },
     { name: "News & Highlights", path: "/news-highlights" },
     { name: "Stadiums", path: "/stadiums" },

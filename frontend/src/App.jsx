@@ -10,12 +10,12 @@ import TeamPage from './pages/TeamPage';
 import NewsPage from './pages/NewsPage';
 import StadiumPage from './pages/StadiumPage';
 import StadiumDetailPage from './pages/StadiumDetailPage';
-import MatchPage from './pages/MatchPage';
 import NotFoundPage from './pages/NotFoundPage';
 import StandingsPage from './pages/StandingsPage';
 import SeriesPage from './pages/SeriesPage';
 import SeriesListPage from './pages/SeriesListPage';
 import { ThemeProvider } from './context/ThemeContext';
+import MatchDetails from './components/MatchDetails';
 
 function App() {
   return (
@@ -33,7 +33,7 @@ function App() {
               <Route path="/news-highlights" element={<NewsPage />} />
               <Route path="/stadiums" element={<StadiumPage />} />
               <Route path="/stadium/:id" element={<StadiumDetailPage />} />
-              <Route path="/match/:id" element={<MatchPage />} />
+              <Route path="/match/:id" element={<MatchDetails />} />
               <Route path="/standings/:seasonId" element={<StandingsPage />} />
               <Route path="/series" element={<SeriesListPage />} />
               <Route path="/series/:id" element={<SeriesPage />} />
