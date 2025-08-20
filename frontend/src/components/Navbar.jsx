@@ -15,7 +15,7 @@ function Navbar() {
     { name: "Home", path: "/" },
     { name: "Live Scores", path: "/live-scores" },
     { name: "Fixtures & Results", path: "/fixtures-results" },
-    { name: "Series", path: "/series", sublinks: [
+     { name: "Series", path: "/series", sublinks: [
       { name: "CPL 2025", path: "/series/cpl-2025" },
       { name: "Asia Cup", path: "/series/asia-cup" },
       { name: "AUS-A Women vs IND-A Women", path: "/series/aus-a-women-vs-ind-a-women" },
@@ -52,7 +52,7 @@ function Navbar() {
     { name: "Teams & Players", path: "/teams-players" },
     { name: "News & Highlights", path: "/news-highlights" },
     { name: "Stadiums", path: "/stadiums" },
-    
+   
   ];
 
   const toggleMobileMenu = () => {
@@ -112,7 +112,7 @@ function Navbar() {
             {/* Center Group: Navigation Links */}
             <div className="flex items-center justify-center space-x-1">
               {navigationLinks.map((link, idx) => (
-                <div key={idx} className="relative group">
+                <div key={idx} className="relative">
                   <NavLink
                     to={link.path}
                     className={({ isActive }) =>
@@ -122,11 +122,13 @@ function Navbar() {
                           : "text-gray-700 hover:text-red-500 hover:bg-red-50"
                       }`
                     }
+                    onMouseEnter={() => link.sublinks && setOpenSublink(link.name)}
+                    onMouseLeave={() => link.sublinks && setOpenSublink(null)}
                   >
                     {link.name}
                   </NavLink>
-                  {link.sublinks && (
-                    <div className="absolute top-full right-0 mt-2 w-[600px] bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50 grid grid-cols-3 gap-2 p-2">
+                  {link.sublinks && openSublink === link.name && (
+                    <div className="absolute top-full left-0 mt-2 w-[600px] bg-white border border-gray-200 rounded-lg shadow-lg z-50 grid grid-cols-3 gap-2 p-2">
                       {link.sublinks.map((sublink, subIdx) => (
                         <NavLink
                           key={subIdx}
@@ -227,7 +229,7 @@ function Navbar() {
           <div className="flex lg:hidden items-center justify-between w-full">
             {/* Left: Logo */}
             <div className="flex items-center pr-4">
-              <NavLink to="/" className="flex items-center space-x-2">
+              <NavLink to="/" className="flex items-center space-x-2" onClick={() => setIsMobileMenuOpen(false)}>
                 <img
                   src="/ic.png"
                   alt="Cricket Logo"
@@ -338,14 +340,27 @@ function Navbar() {
                 {navigationLinks.map((link, idx) => (
                   <div key={idx}>
                     <button
-                      onClick={() => toggleSublink(link.name)}
+                      onClick={() => !link.sublinks && setIsMobileMenuOpen(false)}
                       className={`flex items-center justify-between w-full px-4 py-3 rounded-lg font-medium text-left transition-all duration-200 text-gray-700 hover:text-red-500 hover:bg-red-50`}
                     >
-                      {link.name}
+                      <NavLink
+                        to={link.path}
+                        className={({ isActive }) =>
+                          `flex-1 ${isActive ? "bg-red-100" : ""}`
+                        }
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        {link.name}
+                      </NavLink>
                       {link.sublinks && (
-                        <svg className={`w-4 h-4 transition-transform duration-200 ${openSublink === link.name ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
+                        <button
+                          onClick={() => toggleSublink(link.name)}
+                          className="ml-2"
+                        >
+                          <svg className={`w-4 h-4 transition-transform duration-200 ${openSublink === link.name ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
                       )}
                     </button>
                     {link.sublinks && openSublink === link.name && (

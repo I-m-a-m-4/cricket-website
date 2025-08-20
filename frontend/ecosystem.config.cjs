@@ -1,15 +1,15 @@
 module.exports = {
   apps: [
     {
-      name: "showmelove-waitlist",
+      name: "cricket-website",
       script: "npm",
       args: "run dev",
       env: {
-        PORT: 4000,
+        PORT: 5175,
         NODE_ENV: "development",
       },
       env_production: {
-        PORT: 4000,
+        PORT: 5175,
         NODE_ENV: "production",
       },
     },

@@ -1,68 +1,51 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import HomePage from "./pages/HomePage.jsx";
-import MatchDetails from "./components/MatchDetails.jsx";
-import StandingsPage from "./pages/StandingsPage.jsx";
-import TeamPage from "./components/TeamPage.jsx";
-import TeamsPage from "./pages/TeamPage.jsx";
-import FixturesPage from "./pages/FixturesPage.jsx";
-import Navbar from "./components/Navbar.jsx";
-import Footer from "./components/Footer.jsx";
-import NewsPage from "./pages/NewsPage.jsx";
-import NewsDetail from "./components/NewsDetail.jsx";
-import NotFoundPage from "./pages/NotFoundPage.jsx";
-import LiveScorePage from "./pages/LiveScorePage.jsx";
-import RankingPage from "./pages/RankingPage.jsx";
-import StadiumPage from "./pages/StadiumPage.jsx";
-import StadiumDetailPage from "./pages/StadiumDetailPage.jsx";
-import { ErrorBoundary } from "react-error-boundary";
-
-const CricketPage = () => <div>Cricket Page Content</div>;
-const ContactPage = () => <div>Contact Page Content</div>;
-
-function ErrorFallback({ error, resetErrorBoundary }) {
-  return (
-    <div className="max-w-7xl mx-auto px-4 py-12 text-center">
-      <h1 className="text-3xl font-bold text-red-600">Something Went Wrong</h1>
-      <p className="text-gray-700 mt-4">{error.message}</p>
-      <button
-        onClick={resetErrorBoundary}
-        className="mt-6 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-      >
-        Try Again
-      </button>
-    </div>
-  );
-}
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import Navbar from './components/Navbar';
+import Footer from './components/Footer';
+import HomePage from './pages/HomePage';
+import LiveScorePage from './pages/LiveScorePage';
+import FixturesPage from './pages/FixturesPage';
+import RankingPage from './pages/RankingPage';
+import TeamPage from './pages/TeamPage';
+import NewsPage from './pages/NewsPage';
+import StadiumPage from './pages/StadiumPage';
+import StadiumDetailPage from './pages/StadiumDetailPage';
+import MatchPage from './pages/MatchPage';
+import NotFoundPage from './pages/NotFoundPage';
+import StandingsPage from './pages/StandingsPage';
+import Breadcrumbs from './components/Breadcrumbs';
+import SeriesPage from './pages/SeriesPage';
+import SeriesListPage from './pages/SeriesListPage';
+import { ThemeProvider } from './context/ThemeContext';
 
 function App() {
   return (
-    <BrowserRouter>
-      <ErrorBoundary
-        FallbackComponent={ErrorFallback}
-        onReset={() => window.location.reload()}
-      >
-        <Navbar />
-        <Routes>
-          <Route path="/" element={<Navigate to="/home" replace />} />
-          <Route path="/home" element={<HomePage />} />
-          <Route path="/match/:id" element={<MatchDetails />} />
-          <Route path="/standings" element={<StandingsPage />} />
-          <Route path="/team/:id" element={<TeamPage />} />
-          <Route path="/teams-players" element={<TeamsPage />} />
-          <Route path="/cricket" element={<CricketPage />} />
-          <Route path="/rankings" element={<RankingPage />} />
-          <Route path="/live-scores" element={<LiveScorePage />} />
-          <Route path="/contact" element={<ContactPage />} />
-          <Route path="/fixtures-results" element={<FixturesPage />} />
-          <Route path="/news-highlights" element={<NewsPage />} />
-          <Route path="/news/:url" element={<NewsDetail />} />
-          <Route path="/stadiums" element={<StadiumPage />} />
-          <Route path="/stadium/:id" element={<StadiumDetailPage />} />
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
-        <Footer />
-      </ErrorBoundary>
-    </BrowserRouter>
+    <ThemeProvider>
+      <Router>
+        <div className="flex flex-col min-h-screen">
+          <Navbar />
+          <main className="flex-grow">
+            <Breadcrumbs />
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/live-scores" element={<LiveScorePage />} />
+              <Route path="/fixtures-results" element={<FixturesPage />} />
+              <Route path="/rankings" element={<RankingPage />} />
+              <Route path="/teams-players" element={<TeamPage />} />
+              <Route path="/news-highlights" element={<NewsPage />} />
+              <Route path="/stadiums" element={<StadiumPage />} />
+              <Route path="/stadium/:id" element={<StadiumDetailPage />} />
+              <Route path="/match/:id" element={<MatchPage />} />
+              <Route path="/standings/:seasonId" element={<StandingsPage />} />
+              <Route path="/series" element={<SeriesListPage />} />
+              <Route path="/series/:id" element={<SeriesPage />} />
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </main>
+          <Footer />
+        </div>
+      </Router>
+    </ThemeProvider>
   );
 }
 
