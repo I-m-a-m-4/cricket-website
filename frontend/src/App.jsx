@@ -13,7 +13,6 @@ import StadiumDetailPage from './pages/StadiumDetailPage';
 import MatchPage from './pages/MatchPage';
 import NotFoundPage from './pages/NotFoundPage';
 import StandingsPage from './pages/StandingsPage';
-import Breadcrumbs from './components/Breadcrumbs';
 import SeriesPage from './pages/SeriesPage';
 import SeriesListPage from './pages/SeriesListPage';
 import { ThemeProvider } from './context/ThemeContext';
@@ -25,7 +24,6 @@ function App() {
         <div className="flex flex-col min-h-screen">
           <Navbar />
           <main className="flex-grow">
-            <Breadcrumbs />
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/live-scores" element={<LiveScorePage />} />

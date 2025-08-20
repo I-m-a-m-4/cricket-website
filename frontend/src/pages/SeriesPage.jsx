@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import axios from 'axios';
 
-const BASE_URL = process.env.NODE_ENV === 'development' 
-  ? 'http://localhost:3001/api' 
+const BASE_URL = process.env.NODE_ENV === 'development'
+  ? 'http://localhost:3001/api'
   : 'https://cricket-api-xieo.onrender.com/api';
 
 const SeriesPage = () => {
@@ -20,9 +20,10 @@ const SeriesPage = () => {
         const response = await axios.get(`${BASE_URL}/seasons/${id}`, {
           params: { include: 'stages,fixtures,runs,standings' },
         });
+        // SportMonks API returns data under response.data.data
         setSeries(response.data.data);
       } catch (err) {
-        setError('Failed to load series data');
+        setError('Failed to load series data. Please try again later.');
         console.error('Error fetching series:', err);
       } finally {
         setLoading(false);
@@ -33,17 +34,17 @@ const SeriesPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="container mx-auto px-4">
-          <div className="animate-pulse bg-gray-200 h-64 rounded-lg mb-6"></div>
-          <div className="flex space-x-4 mb-6">
+      <div className="min-h-screen bg-gray-100 py-12">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="animate-pulse bg-gray-200 h-80 rounded-xl mb-8"></div>
+          <div className="flex space-x-4 mb-8">
             {['matches', 'standings', 'points', 'news'].map((tab) => (
-              <div key={tab} className="h-10 bg-gray-200 w-24 rounded"></div>
+              <div key={tab} className="h-12 bg-gray-200 w-32 rounded-lg"></div>
             ))}
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array(6).fill().map((_, i) => (
-              <div key={i} className="h-48 bg-gray-200 rounded-lg"></div>
+              <div key={i} className="h-64 bg-gray-200 rounded-lg"></div>
             ))}
           </div>
         </div>
@@ -53,10 +54,13 @@ const SeriesPage = () => {
 
   if (error || !series) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="container mx-auto px-4 text-center">
-          <p className="text-red-500 text-lg">{error || 'Series not found'}</p>
-          <Link to="/series" className="mt-4 inline-block text-red-500 hover:underline">
+      <div className="min-h-screen bg-gray-100 py-12">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <p className="text-red-600 text-xl font-semibold">{error || 'Series not found'}</p>
+          <Link
+            to="/series"
+            className="mt-6 inline-block text-red-600 hover:text-red-700 font-medium transition-colors"
+          >
             ← Back to Series
           </Link>
         </div>
@@ -65,34 +69,45 @@ const SeriesPage = () => {
   }
 
   const { name, league, stages = [] } = series;
-  const currentStage = stages.find(stage => stage.id === parseInt(id)) || stages[0];
+  const currentStage = stages.find((stage) => stage.id === parseInt(id)) || stages[0] || {};
   const fixtures = currentStage?.fixtures?.data || [];
   const standings = currentStage?.standings?.data || [];
+  // Mock news; replace with real API data if available
   const news = [
-    { id: 1, title: 'Series Update', description: 'Latest news about the series...', image: '/icc.jpg' },
-    // Mock news; replace with real data from /api/news if integrated
+    {
+      id: 1,
+      title: 'Series Update',
+      description: 'Latest news about the series...',
+      image: 'https://via.placeholder.com/400x200?text=Series+News',
+    },
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container mx-auto px-4">
+    <div className="min-h-screen bg-gray-100 py-12">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Hero Section */}
-        <div className="relative bg-red-500 text-white rounded-lg overflow-hidden mb-8 h-64 flex items-center">
-          <div className="absolute inset-0 bg-black opacity-40"></div>
-          <div className="relative z-10 p-6">
-            <h1 className="text-4xl font-extrabold">{name || 'Series Name'}</h1>
-            <p className="text-lg">{league?.name || 'League'} • {currentStage?.name || 'Current Stage'}</p>
+        <div className="relative bg-gradient-to-r from-red-600 to-red-400 text-white rounded-xl overflow-hidden mb-12 h-80 flex items-center shadow-lg">
+          <div className="absolute inset-0 bg-black opacity-50"></div>
+          <div className="relative z-10 p-8">
+            <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight">{name || 'Series Name'}</h1>
+            <p className="text-lg sm:text-xl mt-2">
+              {league?.name || 'League'} • {currentStage?.name || 'Current Stage'}
+            </p>
           </div>
         </div>
 
         {/* Tab Navigation */}
-        <div className="mb-8">
-          <div className="flex space-x-4 border-b">
+        <div className="mb-12">
+          <div className="flex flex-wrap gap-4 border-b border-gray-200">
             {['matches', 'standings', 'points', 'news'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 font-medium ${activeTab === tab ? 'border-b-2 border-red-500 text-red-500' : 'text-[#122e47] hover:text-red-500'}`}
+                className={`px-6 py-3 font-semibold text-lg transition-colors ${
+                  activeTab === tab
+                    ? 'border-b-4 border-red-600 text-red-600'
+                    : 'text-gray-600 hover:text-red-600'
+                }`}
               >
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
               </button>
@@ -102,56 +117,66 @@ const SeriesPage = () => {
 
         {/* Content Sections */}
         {activeTab === 'matches' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {fixtures.map((fixture) => (
               <Link key={fixture.id} to={`/match/${fixture.id}`} className="block">
-                <div className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow">
-                  <h3 className="text-lg font-semibold text-[#122e47]">
-                    {fixture.localteam?.name} vs {fixture.visitorteam?.name}
+                <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-xl transition-shadow duration-300">
+                  <h3 className="text-xl font-semibold text-gray-800">
+                    {fixture.localteam?.name || 'Team A'} vs {fixture.visitorteam?.name || 'Team B'}
                   </h3>
-                  <p className="text-sm text-gray-600">{fixture.league?.name}</p>
-                  <p className="text-sm text-gray-600">
-                    {new Date(fixture.starting_at).toLocaleDateString()} • {fixture.status}
+                  <p className="text-sm text-gray-500 mt-1">{fixture.league?.name || 'League'}</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {new Date(fixture.starting_at).toLocaleDateString('en-US', {
+                      weekday: 'short',
+                      month: 'short',
+                      day: 'numeric',
+                    })}{' '}
+                    • {fixture.status || 'Upcoming'}
                   </p>
-                  <div className="mt-2">
+                  <div className="mt-3">
                     {fixture.runs?.map((run) => (
-                      <p key={run.id} className="text-sm">
-                        {run.team_id === fixture.localteam_id ? fixture.localteam?.name : fixture.visitorteam?.name}: {run.score}/{run.wickets} ({run.overs} overs)
+                      <p key={run.id} className="text-sm text-gray-600">
+                        {run.team_id === fixture.localteam_id
+                          ? fixture.localteam?.name
+                          : fixture.visitorteam?.name}
+                        : {run.score}/{run.wickets} ({run.overs} overs)
                       </p>
                     ))}
                   </div>
                 </div>
               </Link>
             ))}
-            {fixtures.length === 0 && <p className="text-[#122e47] text-center">No matches available.</p>}
+            {fixtures.length === 0 && (
+              <p className="text-gray-600 text-center col-span-full">No matches available.</p>
+            )}
           </div>
         )}
 
         {activeTab === 'standings' && (
-          <div className="bg-white rounded-lg shadow-md p-4">
-            <h2 className="text-2xl font-semibold text-[#122e47] mb-4">Standings</h2>
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-6">Standings</h2>
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
-                  <tr className="border-b">
-                    <th className="py-2 px-4 text-[#122e47]">Rank</th>
-                    <th className="py-2 px-4 text-[#122e47]">Team</th>
-                    <th className="py-2 px-4 text-[#122e47]">Points</th>
-                    <th className="py-2 px-4 text-[#122e47]">Matches</th>
+                  <tr className="border-b border-gray-200">
+                    <th className="py-3 px-4 text-gray-800 font-semibold">Rank</th>
+                    <th className="py-3 px-4 text-gray-800 font-semibold">Team</th>
+                    <th className="py-3 px-4 text-gray-800 font-semibold">Points</th>
+                    <th className="py-3 px-4 text-gray-800 font-semibold">Matches</th>
                   </tr>
                 </thead>
                 <tbody>
                   {standings.map((team, index) => (
-                    <tr key={team.id} className="border-b">
-                      <td className="py-2 px-4">{index + 1}</td>
-                      <td className="py-2 px-4">{team.name}</td>
-                      <td className="py-2 px-4">{team.points || 0}</td>
-                      <td className="py-2 px-4">{team.matches || 0}</td>
+                    <tr key={team.id} className="border-b border-gray-100 hover:bg-gray-50">
+                      <td className="py-3 px-4">{index + 1}</td>
+                      <td className="py-3 px-4">{team.name || 'Unknown Team'}</td>
+                      <td className="py-3 px-4">{team.points || 0}</td>
+                      <td className="py-3 px-4">{team.matches || 0}</td>
                     </tr>
                   ))}
                   {standings.length === 0 && (
                     <tr>
-                      <td colSpan="4" className="py-4 text-center text-[#122e47]">
+                      <td colSpan="4" className="py-6 text-center text-gray-600">
                         No standings available.
                       </td>
                     </tr>
@@ -163,34 +188,34 @@ const SeriesPage = () => {
         )}
 
         {activeTab === 'points' && (
-          <div className="bg-white rounded-lg shadow-md p-4">
-            <h2 className="text-2xl font-semibold text-[#122e47] mb-4">Points Table</h2>
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-6">Points Table</h2>
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
-                  <tr className="border-b">
-                    <th className="py-2 px-4 text-[#122e47]">Rank</th>
-                    <th className="py-2 px-4 text-[#122e47]">Team</th>
-                    <th className="py-2 px-4 text-[#122e47]">Played</th>
-                    <th className="py-2 px-4 text-[#122e47]">Won</th>
-                    <th className="py-2 px-4 text-[#122e47]">Lost</th>
-                    <th className="py-2 px-4 text-[#122e47]">Points</th>
+                  <tr className="border-b border-gray-200">
+                    <th className="py-3 px-4 text-gray-800 font-semibold">Rank</th>
+                    <th className="py-3 px-4 text-gray-800 font-semibold">Team</th>
+                    <th className="py-3 px-4 text-gray-800 font-semibold">Played</th>
+                    <th className="py-3 px-4 text-gray-800 font-semibold">Won</th>
+                    <th className="py-3 px-4 text-gray-800 font-semibold">Lost</th>
+                    <th className="py-3 px-4 text-gray-800 font-semibold">Points</th>
                   </tr>
                 </thead>
                 <tbody>
                   {standings.map((team, index) => (
-                    <tr key={team.id} className="border-b">
-                      <td className="py-2 px-4">{index + 1}</td>
-                      <td className="py-2 px-4">{team.name}</td>
-                      <td className="py-2 px-4">{team.matches || 0}</td>
-                      <td className="py-2 px-4">{team.wins || 0}</td>
-                      <td className="py-2 px-4">{team.losses || 0}</td>
-                      <td className="py-2 px-4">{team.points || 0}</td>
+                    <tr key={team.id} className="border-b border-gray-100 hover:bg-gray-50">
+                      <td className="py-3 px-4">{index + 1}</td>
+                      <td className="py-3 px-4">{team.name || 'Unknown Team'}</td>
+                      <td className="py-3 px-4">{team.matches || 0}</td>
+                      <td className="py-3 px-4">{team.wins || 0}</td>
+                      <td className="py-3 px-4">{team.losses || 0}</td>
+                      <td className="py-3 px-4">{team.points || 0}</td>
                     </tr>
                   ))}
                   {standings.length === 0 && (
                     <tr>
-                      <td colSpan="6" className="py-4 text-center text-[#122e47]">
+                      <td colSpan="6" className="py-6 text-center text-gray-600">
                         No points table data available.
                       </td>
                     </tr>
@@ -202,19 +227,25 @@ const SeriesPage = () => {
         )}
 
         {activeTab === 'news' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {news.map((article) => (
               <Link key={article.id} to={`/news/${article.id}`} className="block">
-                <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-                  <img src={article.image} alt={article.title} className="w-full h-40 object-cover" />
-                  <div className="p-4">
-                    <h3 className="text-lg font-semibold text-[#122e47]">{article.title}</h3>
-                    <p className="text-sm text-gray-600 mt-2">{article.description}</p>
+                <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
+                  <img
+                    src={article.image}
+                    alt={article.title}
+                    className="w-full h-48 object-cover"
+                  />
+                  <div className="p-6">
+                    <h3 className="text-xl font-semibold text-gray-800">{article.title}</h3>
+                    <p className="text-sm text-gray-500 mt-2 line-clamp-3">{article.description}</p>
                   </div>
                 </div>
               </Link>
             ))}
-            {news.length === 0 && <p className="text-[#122e47] text-center">No news available.</p>}
+            {news.length === 0 && (
+              <p className="text-gray-600 text-center col-span-full">No news available.</p>
+            )}
           </div>
         )}
       </div>

@@ -9,55 +9,63 @@ function Navbar() {
   const { isDarkMode, toggleTheme } = useTheme();
   const location = useLocation();
 
-  const isLiveMatch = location.pathname.includes("live-scores"); // Example condition for live match
+  const isLiveMatch = location.pathname.includes("live-scores");
 
   const navigationLinks = [
     { name: "Home", path: "/" },
     { name: "Live Scores", path: "/live-scores" },
     { name: "Fixtures & Results", path: "/fixtures-results" },
-     { name: "Series", path: "/series", sublinks: [
-      { name: "CPL 2025", path: "/series/cpl-2025" },
-      { name: "Asia Cup", path: "/series/asia-cup" },
-      { name: "AUS-A Women vs IND-A Women", path: "/series/aus-a-women-vs-ind-a-women" },
-      { name: "Australia vs South Africa", path: "/series/australia-vs-south-africa" },
-      { name: "UAE Tri-Series [UAE, AFG, PAK]", path: "/series/uae-tri-series" },
-      { name: "Bangladesh vs Netherlands", path: "/series/bangladesh-vs-netherlands" },
-      { name: "South Africa A vs New Zealand A", path: "/series/sa-a-vs-nz-a" },
-      { name: "The Hundred (Women)", path: "/series/the-hundred-women" },
-      { name: "The Hundred (Men)", path: "/series/the-hundred-men" },
-      { name: "SLC T20 League", path: "/series/slc-t20-league" },
-      { name: "Top End T20 Series", path: "/series/top-end-t20" },
-      { name: "Vitality Blast Men", path: "/series/vitality-blast-men" },
-      { name: "Vitality Blast Women", path: "/series/vitality-blast-women" },
-      { name: "County Div1", path: "/series/county-div1" },
-      { name: "County Div2", path: "/series/county-div2" },
-      { name: "One-Day Cup (ENG)", path: "/series/one-day-cup-eng" },
-      { name: "GAK 1-Day Tournament [AFG]", path: "/series/gak-1-day-afg" },
-      { name: "Duleep Trophy", path: "/series/duleep-trophy" },
-      { name: "Test Championship 2025-2027", path: "/series/test-championship" },
-      { name: "Women's Championship", path: "/series/womens-championship" },
-      { name: "World Cup League 2", path: "/series/world-cup-league-2" },
-      { name: "CWC Challenge League Group A", path: "/series/cwc-challenge-a" },
-      { name: "CWC Challenge League Group B", path: "/series/cwc-challenge-b" },
-      { name: "Future Series", path: "/series/future-series" },
-      { name: "Matches", path: "/series/matches" },
-      { name: "Standings", path: "/series/standings" },
-      { name: "Points Table", path: "/series/points-table" },
-      { name: "News Tab", path: "/series/news-tab" }
-    ] },
-    { name: "Stats", path: "/stats", sublinks: [
-      { name: "Team Rankings", path: "/stats/team-rankings" },
-      { name: "Player Career Stats", path: "/stats/player-career-stats" }
-    ] },
+    {
+      name: "Series",
+      path: "/series",
+      sublinks: [
+        { name: "CPL 2025", path: "/series/cpl-2025" },
+        { name: "Asia Cup", path: "/series/asia-cup" },
+        { name: "AUS-A Women vs IND-A Women", path: "/series/aus-a-women-vs-ind-a-women" },
+        { name: "Australia vs South Africa", path: "/series/australia-vs-south-africa" },
+        { name: "UAE Tri-Series [UAE, AFG, PAK]", path: "/series/uae-tri-series" },
+        { name: "Bangladesh vs Netherlands", path: "/series/bangladesh-vs-netherlands" },
+        { name: "South Africa A vs New Zealand A", path: "/series/sa-a-vs-nz-a" },
+        { name: "The Hundred (Women)", path: "/series/the-hundred-women" },
+        { name: "The Hundred (Men)", path: "/series/the-hundred-men" },
+        { name: "SLC T20 League", path: "/series/slc-t20-league" },
+        { name: "Top End T20 Series", path: "/series/top-end-t20" },
+        { name: "Vitality Blast Men", path: "/series/vitality-blast-men" },
+        { name: "Vitality Blast Women", path: "/series/vitality-blast-women" },
+        { name: "County Div1", path: "/series/county-div1" },
+        { name: "County Div2", path: "/series/county-div2" },
+        { name: "One-Day Cup (ENG)", path: "/series/one-day-cup-eng" },
+        { name: "GAK 1-Day Tournament [AFG]", path: "/series/gak-1-day-afg" },
+        { name: "Duleep Trophy", path: "/series/duleep-trophy" },
+        { name: "Test Championship 2025-2027", path: "/series/test-championship" },
+        { name: "Women's Championship", path: "/series/womens-championship" },
+        { name: "World Cup League 2", path: "/series/world-cup-league-2" },
+        { name: "CWC Challenge League Group A", path: "/series/cwc-challenge-a" },
+        { name: "CWC Challenge League Group B", path: "/series/cwc-challenge-b" },
+        { name: "Future Series", path: "/series/future-series" },
+        { name: "Matches", path: "/series/matches" },
+        { name: "Standings", path: "/series/standings" },
+        { name: "Points Table", path: "/series/points-table" },
+        { name: "News Tab", path: "/series/news-tab" },
+      ],
+    },
+    {
+      name: "Stats",
+      path: "/stats",
+      sublinks: [
+        { name: "Team Rankings", path: "/stats/team-rankings" },
+        { name: "Player Career Stats", path: "/stats/player-career-stats" },
+      ],
+    },
     { name: "Teams & Players", path: "/teams-players" },
     { name: "News & Highlights", path: "/news-highlights" },
     { name: "Stadiums", path: "/stadiums" },
-   
   ];
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
-    setOpenSublink(null); // Reset sublink on menu toggle
+    setOpenSublink(null);
+    setIsSocialDropdownOpen(false); // Close social dropdown when toggling mobile menu
   };
 
   const toggleSublink = (name) => {
@@ -97,7 +105,7 @@ function Navbar() {
       </div>
 
       {/* Main navigation row */}
-      <nav className="bg-white border-b border-gray-200 py-4 shadow-sm relative z-40">
+      <nav className="bg-white border-b border-gray-200 py-4 shadow-sm relative z-50">
         <div className="container mx-auto px-4">
           {/* Desktop Layout */}
           <div className="hidden lg:flex justify-between items-center">
@@ -112,7 +120,7 @@ function Navbar() {
             {/* Center Group: Navigation Links */}
             <div className="flex items-center justify-center space-x-1">
               {navigationLinks.map((link, idx) => (
-                <div key={idx} className="relative">
+                <div key={idx} className="relative group" onMouseEnter={() => link.sublinks && setOpenSublink(link.name)} onMouseLeave={() => link.sublinks && setOpenSublink(null)}>
                   <NavLink
                     to={link.path}
                     className={({ isActive }) =>
@@ -122,8 +130,6 @@ function Navbar() {
                           : "text-gray-700 hover:text-red-500 hover:bg-red-50"
                       }`
                     }
-                    onMouseEnter={() => link.sublinks && setOpenSublink(link.name)}
-                    onMouseLeave={() => link.sublinks && setOpenSublink(null)}
                   >
                     {link.name}
                   </NavLink>
@@ -231,7 +237,7 @@ function Navbar() {
             <div className="flex items-center pr-4">
               <NavLink to="/" className="flex items-center space-x-2" onClick={() => setIsMobileMenuOpen(false)}>
                 <img
-                  src="/ic.png"
+                  src="/icon.png"
                   alt="Cricket Logo"
                   className="w-8 h-8 rounded-full object-cover shadow-lg"
                 />
@@ -242,10 +248,10 @@ function Navbar() {
             </div>
 
             {/* Right Side: Theme Toggle + Social Icons + Hamburger */}
-            <div className="flex items-center space-x-1.5">
+            <div className="flex items-center space-x-2">
               <button
                 onClick={toggleTheme}
-                className="flex items-center justify-center transition-colors duration-200"
+                className="flex items-center justify-center p-1.5 transition-colors duration-200"
                 aria-label="Toggle theme"
               >
                 {isDarkMode ? (
@@ -261,7 +267,7 @@ function Navbar() {
               <div className="relative">
                 <button
                   onClick={toggleSocialDropdown}
-                  className="flex items-center justify-center p-1 bg-white text-gray-700 hover:text-red-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-red-500 rounded"
+                  className="flex items-center justify-center p-1.5 bg-white text-gray-700 hover:text-red-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-red-500 rounded"
                   aria-label="Toggle social icons"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -317,10 +323,10 @@ function Navbar() {
               </div>
               <button
                 onClick={toggleMobileMenu}
-                className="ml-1.5 p-1.5 bg-white text-gray-700 hover:text-red-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-red-500 rounded"
+                className="p-2 bg-white text-gray-700 hover:text-red-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-red-500 rounded"
                 aria-label="Toggle menu"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   {isMobileMenuOpen ? (
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   ) : (
@@ -332,60 +338,59 @@ function Navbar() {
           </div>
 
           {/* Mobile Menu Dropdown */}
-          <div className={`lg:hidden absolute top-full left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-lg transition-all duration-300 ease-in-out ${
-            isMobileMenuOpen ? "opacity-100 visible" : "opacity-0 invisible"
-          }`}>
-            <div className="container mx-auto px-4 py-4">
-              <div className="flex flex-col space-y-4">
-                {navigationLinks.map((link, idx) => (
-                  <div key={idx}>
-                    <button
-                      onClick={() => !link.sublinks && setIsMobileMenuOpen(false)}
-                      className={`flex items-center justify-between w-full px-4 py-3 rounded-lg font-medium text-left transition-all duration-200 text-gray-700 hover:text-red-500 hover:bg-red-50`}
-                    >
-                      <NavLink
-                        to={link.path}
-                        className={({ isActive }) =>
-                          `flex-1 ${isActive ? "bg-red-100" : ""}`
-                        }
-                        onClick={() => setIsMobileMenuOpen(false)}
+          {isMobileMenuOpen && (
+            <div className="lg:hidden absolute top-full left-0 right-0 bg-white border-b border-gray-200 shadow-lg z-50 min-h-[calc(100vh-4rem)] transition-all duration-300 ease-in-out">
+              <div className="container mx-auto px-4 py-4">
+                <div className="flex flex-col space-y-2">
+                  {navigationLinks.map((link, idx) => (
+                    <div key={idx}>
+                      <div
+                        className="flex items-center justify-between w-full px-4 py-2 rounded-lg font-medium text-base text-gray-700 hover:text-red-500 hover:bg-red-50 transition-all duration-200"
                       >
-                        {link.name}
-                      </NavLink>
-                      {link.sublinks && (
-                        <button
-                          onClick={() => toggleSublink(link.name)}
-                          className="ml-2"
+                        <NavLink
+                          to={link.path}
+                          className={({ isActive }) =>
+                            `flex-1 ${isActive ? "text-red-500 font-semibold" : ""}`
+                          }
+                          onClick={() => setIsMobileMenuOpen(false)}
                         >
-                          <svg className={`w-4 h-4 transition-transform duration-200 ${openSublink === link.name ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </button>
-                      )}
-                    </button>
-                    {link.sublinks && openSublink === link.name && (
-                      <div className="ml-4 mt-2 space-y-1">
-                        {link.sublinks.map((sublink, subIdx) => (
-                          <NavLink
-                            key={subIdx}
-                            to={sublink.path}
-                            onClick={() => setIsMobileMenuOpen(false)}
-                            className={({ isActive }) =>
-                              `block px-4 py-1 text-sm text-gray-700 hover:bg-red-50 hover:text-red-500 ${
-                                isActive ? "bg-red-100" : ""
-                              }`
-                            }
+                          {link.name}
+                        </NavLink>
+                        {link.sublinks && (
+                          <button
+                            onClick={() => toggleSublink(link.name)}
+                            className="ml-2 p-1"
                           >
-                            {sublink.name}
-                          </NavLink>
-                        ))}
+                            <svg className={`w-5 h-5 transition-transform duration-200 ${openSublink === link.name ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </button>
+                        )}
                       </div>
-                    )}
-                  </div>
-                ))}
+                      {link.sublinks && openSublink === link.name && (
+                        <div className="ml-6 mt-1 space-y-1">
+                          {link.sublinks.map((sublink, subIdx) => (
+                            <NavLink
+                              key={subIdx}
+                              to={sublink.path}
+                              onClick={() => setIsMobileMenuOpen(false)}
+                              className={({ isActive }) =>
+                                `block px-4 py-1 text-sm text-gray-600 hover:bg-red-50 hover:text-red-500 ${
+                                  isActive ? "bg-red-50 text-red-500" : ""
+                                }`
+                              }
+                            >
+                              {sublink.name}
+                            </NavLink>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </nav>
     </header>
