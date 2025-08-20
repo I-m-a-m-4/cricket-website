@@ -214,53 +214,198 @@ app.get('/api/matches/upcoming', async (req, res) => {
 
 // Endpoint to get seasons
 app.get('/api/seasons', async (req, res) => {
-    const API_BASE_URL = 'https://cricket.sportmonks.com/api/v2.0';
-    const API_TOKEN = process.env.SPORTMONKS_API_TOKEN;
+  const API_BASE_URL = 'https://cricket.sportmonks.com/api/v2.0';
+  const API_TOKEN = process.env.SPORTMONKS_API_TOKEN;
 
-    try {
-        const url = new URL(`${API_BASE_URL}/seasons`);
-        url.searchParams.append('api_token', API_TOKEN);
-        url.searchParams.append('include', 'league');
-        url.searchParams.append('sort', 'league_id,name');
+  try {
+    const url = new URL(`${API_BASE_URL}/seasons`);
+    url.searchParams.append('api_token', API_TOKEN);
+    url.searchParams.append('include', 'league');
+    // ❌ remove sort, SportMonks rejects it
+    // url.searchParams.append('sort', 'league_id,name');
 
-        console.log('🎯 Requesting:', url.toString());
+    console.log('🎯 Requesting:', url.toString());
 
-        const response = await axios.get(url.toString(), {
-            timeout: 10000
-        });
+    const response = await axios.get(url.toString(), { timeout: 10000 });
 
-        if (!response.data || !response.data.data || !Array.isArray(response.data.data)) {
-            return res.status(500).json({
-                error: 'Invalid response from SportMonks',
-                details: 'Missing or malformed data'
-            });
-        }
-
-        res.json(response.data);
-
-    } catch (error) {
-        console.error('❌ Full Error:', error.message);
-
-        if (error.response) {
-            console.error('👉 API Response:', error.response.status, error.response.data);
-            return res.status(error.response.status).json({
-                error: 'SportMonks API error',
-                details: error.response.data.message?.message || 'Unknown error'
-            });
-        }
-
-        if (error.code === 'EPROTO' || error.code === 'ERR_SSL') {
-            return res.status(500).json({
-                error: 'SSL/TLS handshake failed',
-                details: 'Check Node.js version or network firewall'
-            });
-        }
-
-        return res.status(500).json({
-            error: 'Internal server error',
-            details: error.message
-        });
+    if (!response.data || !response.data.data || !Array.isArray(response.data.data)) {
+      return res.status(500).json({
+        error: 'Invalid response from SportMonks',
+        details: 'Missing or malformed data',
+      });
     }
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('❌ Full Error:', error.message);
+
+    if (error.response) {
+      console.error('👉 API Response:', error.response.status, error.response.data);
+      return res.status(error.response.status).json({
+        error: 'SportMonks API error',
+        details: error.response.data.message?.message || 'Unknown error',
+      });
+    }
+
+    if (error.code === 'EPROTO' || error.code === 'ERR_SSL') {
+      return res.status(500).json({
+        error: 'SSL/TLS handshake failed',
+        details: 'Check Node.js version or network firewall',
+      });
+    }
+
+    return res.status(500).json({
+      error: 'Internal server error',
+      details: error.message,
+    });
+  }
+});
+
+// Fixed endpoint to get individual season with details
+app.get('/api/seasons/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // First, get the season basic info
+    const seasonUrl = new URL(`${API_BASE_URL}/seasons/${id}`);
+    seasonUrl.searchParams.append('api_token', API_TOKEN);
+    seasonUrl.searchParams.append('include', 'league');
+
+    console.log('🎯 Requesting season details:', seasonUrl.toString());
+
+    let seasonResponse;
+    try {
+      seasonResponse = await axios.get(seasonUrl.toString(), { timeout: 10000 });
+    } catch (seasonError) {
+      // If individual season fails, try getting all seasons and filter by ID
+      console.log('Individual season failed, trying all seasons...');
+      const allSeasonsResponse = await axios.get(`${API_BASE_URL}/seasons`, {
+        params: {
+          api_token: API_TOKEN,
+          include: 'league'
+        }
+      });
+      
+      const season = allSeasonsResponse.data.data.find(s => s.id === parseInt(id));
+      if (!season) {
+        return res.status(404).json({
+          error: 'Season not found',
+          details: 'Season ID not found in available seasons',
+        });
+      }
+      
+      seasonResponse = { data: { data: season } };
+    }
+
+    if (!seasonResponse.data || !seasonResponse.data.data) {
+      return res.status(404).json({
+        error: 'Season not found',
+        details: 'No data returned from SportMonks',
+      });
+    }
+
+    // Now get fixtures for this season
+    let fixtures = [];
+    try {
+      const fixturesResponse = await axios.get(`${API_BASE_URL}/fixtures`, {
+        params: {
+          api_token: API_TOKEN,
+          'filter[season_id]': id,
+          include: 'localteam,visitorteam,runs,venue,league'
+        }
+      });
+      fixtures = fixturesResponse.data.data || [];
+    } catch (fixturesError) {
+      console.warn('Could not fetch fixtures for season:', fixturesError.message);
+    }
+
+    // Combine season data with fixtures
+    const result = {
+      ...seasonResponse.data.data,
+      fixtures: fixtures
+    };
+
+    res.json({ data: result });
+  } catch (error) {
+    console.error('❌ Season fetch error:', error.message);
+
+    if (error.response) {
+      console.error('👉 API Response:', error.response.status, error.response.data);
+      return res.status(error.response.status).json({
+        error: 'SportMonks API error',
+        details: error.response.data.message?.message || 'Season not found',
+      });
+    }
+
+    return res.status(500).json({
+      error: 'Internal server error',
+      details: error.message,
+    });
+  }
+});
+
+// Alternative endpoint using league ID
+app.get('/api/leagues/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const url = new URL(`${API_BASE_URL}/leagues/${id}`);
+    url.searchParams.append('api_token', API_TOKEN);
+    url.searchParams.append('include', 'seasons');
+
+    console.log('🎯 Requesting league details:', url.toString());
+
+    const response = await axios.get(url.toString(), { timeout: 10000 });
+
+    if (!response.data || !response.data.data) {
+      return res.status(404).json({
+        error: 'League not found',
+        details: 'No data returned from SportMonks',
+      });
+    }
+
+    // Get fixtures for all seasons of this league
+    let fixtures = [];
+    if (response.data.data.seasons && response.data.data.seasons.data) {
+      for (const season of response.data.data.seasons.data) {
+        try {
+          const seasonFixtures = await axios.get(`${API_BASE_URL}/fixtures`, {
+            params: {
+              api_token: API_TOKEN,
+              'filter[season_id]': season.id,
+              include: 'localteam,visitorteam,runs,venue'
+            }
+          });
+          fixtures = fixtures.concat(seasonFixtures.data.data || []);
+        } catch (err) {
+          console.warn(`Could not fetch fixtures for season ${season.id}:`, err.message);
+        }
+      }
+    }
+
+    // Add fixtures to the league data
+    const result = {
+      ...response.data.data,
+      fixtures: fixtures
+    };
+
+    res.json({ data: result });
+  } catch (error) {
+    console.error('❌ League fetch error:', error.message);
+
+    if (error.response) {
+      console.error('👉 API Response:', error.response.status, error.response.data);
+      return res.status(error.response.status).json({
+        error: 'SportMonks API error',
+        details: error.response.data.message?.message || 'League not found',
+      });
+    }
+
+    return res.status(500).json({
+      error: 'Internal server error',
+      details: error.message,
+    });
+  }
 });
 
 // Endpoint to get "news" articles from recent fixtures
