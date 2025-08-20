@@ -824,8 +824,16 @@ export default function LiveScorePage() {
   /* ================== RENDER ================== */
   return (
     <div className="max-w-[1200px] mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6">
-      <Breadcrumbs />
-
+  {/* Navigation Breadcrumb */}
+      <div className="bg-white border-b">
+        <div className="max-w-7xl mx-auto px-4 py-3">
+          <nav className="flex items-center gap-2 text-sm text-gray-600">
+            <a href="/" className="hover:text-red-600">Home</a>
+            <span>›</span>
+            <span className="text-gray-900">Live Score</span>
+          </nav>
+        </div>
+      </div>
       <header className="mt-1 sm:mt-2 mb-1">
         <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold">Cricket Match Center</h1>
         <p className="text-gray-600 mt-1 text-sm sm:text-base">Live scores, schedules and results.</p>
