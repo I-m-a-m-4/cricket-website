@@ -674,6 +674,54 @@ app.get('/api/team-rankings/global', async (req, res) => {
   }
 });
 
+app.get('/api/players/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const response = await axios.get(`${API_BASE_URL}/players/${id}`, {
+      params: {
+        api_token: API_TOKEN,
+        include: 'career,profile,image,team,country,batting_style,bowling_style,position',
+      },
+      timeout: 10000,
+    });
+    const p = response.data.data;
+    const player = {
+      id: p.id,
+      name: p.name,
+      full_name: p.profile?.fullname || p.name,
+      image: p.image?.url || p.image_path || null,
+      team: p.team?.name,
+      country: p.country?.name,
+      role: p.position?.name || p.type || 'Player',
+      batting_style: p.batting_style?.name || 'Unknown',
+      bowling_style: p.bowling_style?.name || 'Unknown',
+      date_of_birth: p.date_of_birth,
+      height: p.height,
+      weight: p.weight,
+      debut: p.profile?.debut,
+      birth_place: p.profile?.birth_place,
+      nickname: p.profile?.nickname || null,
+      description: p.profile?.information || `A talented ${p.position?.name || 'player'} from ${p.country?.name}.`,
+      career: p.career || [],
+      stats: {
+        matches: p.stats?.matches || 0,
+        runs: p.stats?.runs || 0,
+        wickets: p.stats?.wickets || 0,
+        avg: p.stats?.average || 0,
+        sr: p.stats?.strike_rate || 0,
+        econ: p.stats?.economy || 0,
+        fifties: p.stats?.fifties || 0,
+        hundreds: p.stats?.hundreds || 0,
+        four_wickets: p.stats?.four_wickets || 0,
+        five_wickets: p.stats?.five_wickets || 0,
+      },
+    };
+    res.json(player);
+  } catch (error) {
+    console.error('Error fetching player:', error.message);
+    res.status(500).json({ error: 'Failed to fetch player' });
+  }
+});
 
 // GET All Teams
 app.get('/api/teams', async (req, res) => {
@@ -836,58 +884,7 @@ app.get('/api/teams/:id', async (req, res) => {
 // ... (rest of server.js remains the same)
 // ... (rest of the server.js remains unchanged)
 // GET Player by ID
-app.get('/api/players/:id', async (req, res) => {
-  const { id } = req.params;
-  try {
-    const response = await axios.get(`${API_BASE_URL}/players/${id}`, {
-      params: {
-        api_token: API_TOKEN,
-        include: 'profile,image,team,country,batting_style,bowling_style,position',
-      },
-      timeout: 10000,
-    });
 
-    console.log('SportMonks /players/:id response:', response.data); // Debug
-
-    const p = response.data.data;
-
-    const player = {
-      id: p.id,
-      name: p.name,
-      full_name: p.profile?.fullname || p.name,
-      image: p.image?.url || p.image_path || null,
-      team: p.team?.name,
-      country: p.country?.name,
-      role: p.position?.name || p.type || 'Player',
-      batting_style: p.batting_style?.name || 'Unknown',
-      bowling_style: p.bowling_style?.name || 'Unknown',
-      date_of_birth: p.date_of_birth,
-      height: p.height,
-      weight: p.weight,
-      debut: p.profile?.debut,
-      birth_place: p.profile?.birth_place,
-      nickname: p.profile?.nickname || null,
-      description: p.profile?.information || `A talented ${p.position?.name || 'player'} from ${p.country?.name}.`,
-      stats: {
-        matches: p.stats?.matches || 0,
-        runs: p.stats?.runs || 0,
-        wickets: p.stats?.wickets || 0,
-        avg: p.stats?.average || 0,
-        sr: p.stats?.strike_rate || 0,
-        econ: p.stats?.economy || 0,
-        fifties: p.stats?.fifties || 0,
-        hundreds: p.stats?.hundreds || 0,
-        four_wickets: p.stats?.four_wickets || 0,
-        five_wickets: p.stats?.five_wickets || 0,
-      },
-    };
-
-    res.json(player);
-  } catch (error) {
-    console.error('Error fetching player:', error.message);
-    res.status(500).json({ error: 'Failed to fetch player' });
-  }
-});
 
 
 // Fallback articles
