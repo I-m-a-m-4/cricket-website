@@ -7,6 +7,7 @@ import LiveScorePage from './pages/LiveScorePage';
 import FixturesPage from './pages/FixturesPage';
 import RankingPage from './pages/RankingPage';
 import TeamPage from './pages/TeamPage';
+import TeamPageDetails from './components/TeamPageDetails';
 import NewsPage from './pages/NewsPage';
 import StadiumPage from './pages/StadiumPage';
 import StadiumDetailPage from './pages/StadiumDetailPage';
@@ -16,6 +17,7 @@ import SeriesPage from './pages/SeriesPage';
 import SeriesListPage from './pages/SeriesListPage';
 import { ThemeProvider } from './context/ThemeContext';
 import MatchDetails from './components/MatchDetails';
+import Stats from './pages/Stats';
 
 function App() {
   return (
@@ -30,6 +32,7 @@ function App() {
               <Route path="/fixtures-results" element={<FixturesPage />} />
               <Route path="/rankings" element={<RankingPage />} />
               <Route path="/teams-players" element={<TeamPage />} />
+              <Route path="/teams/:id" element={<TeamPageDetails />} />
               <Route path="/news-highlights" element={<NewsPage />} />
               <Route path="/stadiums" element={<StadiumPage />} />
               <Route path="/stadium/:id" element={<StadiumDetailPage />} />
@@ -37,6 +40,7 @@ function App() {
               <Route path="/standings/:seasonId" element={<StandingsPage />} />
               <Route path="/series" element={<SeriesListPage />} />
               <Route path="/series/:id" element={<SeriesPage />} />
+              <Route path="/stats/*" element={<Stats />} />
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </main>

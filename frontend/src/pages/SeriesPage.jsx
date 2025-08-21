@@ -20,7 +20,6 @@ const SeriesPage = () => {
         const response = await axios.get(`${BASE_URL}/seasons/${id}`, {
           params: { include: 'stages,fixtures,runs,standings' },
         });
-        // SportMonks API returns data under response.data.data
         setSeries(response.data.data);
       } catch (err) {
         setError('Failed to load series data. Please try again later.');
@@ -72,7 +71,6 @@ const SeriesPage = () => {
   const currentStage = stages.find((stage) => stage.id === parseInt(id)) || stages[0] || {};
   const fixtures = currentStage?.fixtures?.data || [];
   const standings = currentStage?.standings?.data || [];
-  // Mock news; replace with real API data if available
   const news = [
     {
       id: 1,
@@ -216,8 +214,8 @@ const SeriesPage = () => {
                   {standings.length === 0 && (
                     <tr>
                       <td colSpan="6" className="py-6 text-center text-gray-600">
-                        No points table data available.
-                      </td>
+                      No points table data available.
+                    </td>
                     </tr>
                   )}
                 </tbody>

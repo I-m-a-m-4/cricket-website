@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
-import PlayerModal from '../components/PlayerModal.jsx';
+import PlayerModal from './PlayerModal.jsx';
 
 const BASE_URL = process.env.NODE_ENV === 'development' 
   ? 'http://localhost:3001/api' 
@@ -26,7 +26,7 @@ export const fetchPlayerDetails = async (id) => {
   }
 };
 
-const TeamPage = () => {
+const TeamPageDetails = () => {
   const { id } = useParams();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -241,4 +241,4 @@ const TeamPage = () => {
   );
 };
 
-export default TeamPage;
+export default TeamPageDetails;

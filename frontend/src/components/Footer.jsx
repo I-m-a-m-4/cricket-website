@@ -36,7 +36,7 @@ function Footer() {
                     to={link.path}
                     className={({ isActive }) =>
                       `hover:text-gray-300 ${
-                        isActive ? "text-pink-400 font-semibold" : ""
+                        isActive ? "text-red-400 font-semibold" : ""
                       }`
                     }
                   >
