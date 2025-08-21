@@ -18,6 +18,9 @@ import SeriesListPage from './pages/SeriesListPage';
 import { ThemeProvider } from './context/ThemeContext';
 import MatchDetails from './components/MatchDetails';
 import Stats from './pages/Stats';
+import SeriesFixturesPage from './pages/SeriesFixturesPage';
+import SeriesSquadsPage from './pages/SeriesSquadsPage';
+import SeriesStandingsPage from './pages/SeriesStandingsPage';
 
 function App() {
   return (
@@ -40,6 +43,9 @@ function App() {
               <Route path="/standings/:seasonId" element={<StandingsPage />} />
               <Route path="/series" element={<SeriesListPage />} />
               <Route path="/series/:id" element={<SeriesPage />} />
+              <Route path="/series/:seasonId/fixtures" element={<SeriesFixturesPage />} />
+              <Route path="/series/:seasonId/squads" element={<SeriesSquadsPage />} />
+              <Route path="/series/:seasonId/standings" element={<SeriesStandingsPage />} />
               <Route path="/stats/*" element={<Stats />} />
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
