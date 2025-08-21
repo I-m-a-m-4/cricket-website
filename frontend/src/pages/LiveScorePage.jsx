@@ -6,6 +6,7 @@ import {
   fetchRecentMatches,
   fetchUpcomingMatches,
 } from "../utils/api"; // guaranteed helpers; optional helpers loaded dynamically
+
 /* ================== CONFIG & HELPERS ================== */
 const LEAGUE_LOGOS = {
   "The Hundred": "/th.png",
@@ -22,35 +23,42 @@ const LEAGUE_LOGOS = {
   CPL: "/cpl.png",
   default: "/icc.jpg",
 };
+
 const safeGet = (v, fallback = "") => (v === undefined || v === null ? fallback : v);
+
 const formatOvers = (overs) => {
   if (overs === null || overs === undefined || Number.isNaN(overs)) return "—";
   const full = Math.floor(overs);
   const balls = Math.round((overs - full) * 10);
   return `${full}.${balls}`;
 };
+
 const formatScore = (score, wickets, overs) => {
   if (score === null || score === undefined) return "—";
-  if (wickets === null || wickets === undefined || wickets === "undefined") return `${score}/—`;
+  if (wickets === null || wickets === undefined) return `${score}/—`;
   if (overs === null || overs === undefined) return `${score}/${wickets}`;
   return `${score}/${wickets} (${formatOvers(overs)})`;
 };
+
 const rr = (score, overs) => {
   if (score === null || score === undefined) return "—";
   if (!overs || overs <= 0) return "—";
   return (score / overs).toFixed(2);
 };
+
 const teamInfo = (team) => ({
-  name: team?.name || team?.title || team?.fullname || team?.full_name || "Unknown",
-  flag: team?.image_path || team?.image || team?.logo_path || team?.logo || null,
-  code: team?.code || team?.abbreviation?.toUpperCase() || team?.short_code?.toUpperCase() || "T",
+  name: team?.name || "Unknown",
+  flag: team?.image_path || team?.image || team?.logo_path || null, // null if absent
 });
+
 const leagueLogo = (leagueName) => LEAGUE_LOGOS[leagueName] || LEAGUE_LOGOS.default;
+
 // Robust last ball reader (no undefined.undefined)
 const lastBallEvent = (ballsData) => {
   if (!Array.isArray(ballsData) || ballsData.length === 0) return null;
   const b = ballsData[ballsData.length - 1] || {};
   const out = [];
+
   // textual outcome
   if (b.batsmanout || b.wicket) out.push("WICKET ⚰️");
   else if (b.score?.run === 6 || b.runs === 6) out.push("SIX 🎉");
@@ -59,21 +67,26 @@ const lastBallEvent = (ballsData) => {
     const r = b.score?.run ?? b.runs;
     out.push(`${r} ${r === 1 ? "run" : "runs"}`);
   } else out.push("Dot ball");
+
   // over/ball may be absent in some feeds — guard it
   const overNum =
     b.over_number ??
     b.overNumber ??
     (typeof b.over === "number" ? b.over : undefined);
+
   const ballNum =
     b.ball_number ??
     b.ballNumber ??
     (typeof b.ball === "number" ? b.ball : undefined);
+
   const overStr =
     Number.isFinite(overNum) && Number.isFinite(ballNum)
       ? `${overNum}.${ballNum}`
       : null;
+
   return { text: out.join(", "), over: overStr };
 };
+
 /* ================== CONSTANTS ================== */
 const TAB_KEYS = [
   { key: "live", label: "Live Cricket Score" },
@@ -94,6 +107,7 @@ const CHIP_FILTERS = [
   { id: "listA", label: "List A" },
   { id: "others", label: "Others" },
 ];
+
 /* ================== MAIN COMPONENT ================== */
 export default function LiveScorePage() {
   const [liveMatches, setLiveMatches] = useState([]);
@@ -102,19 +116,23 @@ export default function LiveScorePage() {
   const [topPlayers, setTopPlayers] = useState([]);
   const [trendingNews, setTrendingNews] = useState([]);
   const [trendingVenues, setTrendingVenues] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("live");
   const [activeFilters, setActiveFilters] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [errorMsg, setErrorMsg] = useState("");
+
   const navigate = useNavigate();
   const location = useLocation();
+
   // read ?tab= from URL
   useEffect(() => {
     const params = new URLSearchParams(location?.search || "");
     const tab = params.get("tab");
     if (tab && TAB_KEYS.some((t) => t.key === tab)) setActiveTab(tab);
   }, [location]);
+
   // Load data. dynamic imports for optional helpers
   useEffect(() => {
     let mounted = true;
@@ -126,6 +144,7 @@ export default function LiveScorePage() {
         const optionalFetchTopPlayers = apiModule.fetchTopPlayers;
         const optionalFetchTopHeadlines = apiModule.fetchTopHeadlines;
         const optionalFetchTrendingNews = apiModule.fetchTrendingNews;
+
         const pLive = fetchLiveMatches?.().catch((e) => {
           console.warn(e);
           return [];
@@ -156,17 +175,22 @@ export default function LiveScorePage() {
               return [];
             })
           : Promise.resolve([]);
+
         const [live, recent, upcoming, players, headlines, trending] =
           await Promise.all([pLive, pRecent, pUpcoming, pPlayers, pHeadlines, pTrending]);
+
         if (!mounted) return;
+
         setLiveMatches(Array.isArray(live) ? live : []);
         setRecentMatches(Array.isArray(recent) ? recent : []);
         setUpcomingMatches(Array.isArray(upcoming) ? upcoming : []);
         setTopPlayers(Array.isArray(players) ? players : []);
+
         const news =
           (Array.isArray(headlines) && headlines.length ? headlines : []) ||
           (Array.isArray(trending) ? trending : []);
         setTrendingNews(news);
+
         // simple trending venues fallback (no placeholders)
         const tv = (Array.isArray(recent) ? recent : [])
           .slice(0, 6)
@@ -186,6 +210,7 @@ export default function LiveScorePage() {
         if (mounted) setLoading(false);
       }
     };
+
     loadAll();
     const id = setInterval(loadAll, 300000);
     return () => {
@@ -193,6 +218,7 @@ export default function LiveScorePage() {
       clearInterval(id);
     };
   }, []);
+
   // Group by series/league
   const groupBySeries = (matches = []) => {
     const map = new Map();
@@ -204,9 +230,11 @@ export default function LiveScorePage() {
     });
     return Array.from(map.entries()).map(([series, list]) => ({ series, list }));
   };
+
   const groupedLive = useMemo(() => groupBySeries(liveMatches), [liveMatches]);
   const groupedResults = useMemo(() => groupBySeries(recentMatches), [recentMatches]);
   const groupedUpcoming = useMemo(() => groupBySeries(upcomingMatches), [upcomingMatches]);
+
   // Filtering helpers (applies immediately)
   const getMatchType = (m) => {
     const candidates = [m.type, m.round, m.league?.format, m.league?.type, m.stage?.name].filter(
@@ -216,6 +244,7 @@ export default function LiveScorePage() {
   };
   const getMatchGender = (m) => (m.gender || m.league?.gender || "").toLowerCase();
   const getLeagueNameLower = (m) => (m.league?.name || "").toLowerCase();
+
   const applyChipFilters = (matches = []) => {
     if (!Array.isArray(matches)) return [];
     if (activeFilters.length === 0) return matches;
@@ -257,7 +286,8 @@ export default function LiveScorePage() {
       });
     });
   };
-  /* ======= Derive "Form Players" fallback when /players/top fails ======= */
+
+  /* ======= Derive “Form Players” fallback when /players/top fails ======= */
   const derivedFormPlayers = useMemo(() => {
     // collect batters/wickets from recent + live
     const buckets = new Map(); // name -> {runs, wickets, image, team}
@@ -301,6 +331,7 @@ export default function LiveScorePage() {
     };
     harvest(recentMatches);
     harvest(liveMatches);
+
     const arr = Array.from(buckets.entries()).map(([name, v]) => ({
       id: `form-${name}`,
       name,
@@ -309,10 +340,12 @@ export default function LiveScorePage() {
       runs: v.runs,
       wickets: v.wickets,
     }));
+
     // rank: prioritize wickets, then runs
     arr.sort((a, b) => (b.wickets || 0) - (a.wickets || 0) || (b.runs || 0) - (a.runs || 0));
     return arr.slice(0, 8);
   }, [recentMatches, liveMatches]);
+
   const playersToShow = useMemo(() => {
     if (Array.isArray(topPlayers) && topPlayers.length) return topPlayers.slice(0, 8);
     if (Array.isArray(derivedFormPlayers) && derivedFormPlayers.length)
@@ -328,7 +361,9 @@ export default function LiveScorePage() {
     });
     return mop.slice(0, 6);
   }, [topPlayers, derivedFormPlayers, recentMatches]);
+
   /* ================== UI SUBCOMPONENTS ================== */
+
   // Breadcrumbs
   const Breadcrumbs = () => {
     const { pathname } = location;
@@ -361,6 +396,7 @@ export default function LiveScorePage() {
       </nav>
     );
   };
+
   // Sticky Tabs
   const Tabs = () => (
     <div className="sticky top-0 z-40 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/60 border-b">
@@ -388,6 +424,7 @@ export default function LiveScorePage() {
       </div>
     </div>
   );
+
   const DayBar = () => {
     const today = new Date();
     const start = new Date(today);
@@ -417,6 +454,7 @@ export default function LiveScorePage() {
         <button onClick={() => setActiveFilters([])} className="ml-1 sm:ml-2 text-xs sm:text-sm px-3 py-2 rounded-md border bg-white">
           Reset
         </button>
+
         <div className="flex gap-2 flex-wrap">
           {CHIP_FILTERS.map((f) => {
             const active = activeFilters.includes(f.id);
@@ -440,307 +478,188 @@ export default function LiveScorePage() {
       </div>
     );
   };
-  
-  // Fixed MatchCard Component with Proper Score Display and Increased Width
+
+  // Match card: “tabular” feel with faint dividers and hierarchy
   const MatchCard = ({ match }) => {
     if (!match) return null;
-    
-    // Determine match type based on activeTab and match status
-    const getMatchType = () => {
-      if (activeTab === "live") return "LIVE";
-      if (activeTab === "schedule") return "UPCOMING";
-      if (activeTab === "results") return "FINISHED";
-      
-      // Fallback based on match data
-      const status = match.status?.toLowerCase() || "";
-      const note = match.note?.toLowerCase() || "";
-      
-      if (status === "live" || status === "in progress" || note.includes("live")) {
-        return "LIVE";
-      } else if (status === "fixture" || status === "scheduled" || note.includes("today")) {
-        return "UPCOMING";
-      } else {
-        return "FINISHED";
-      }
-    };
-    
-    const matchType = getMatchType();
-    
-    const getStatusColor = (type) => {
-      switch (type) {
-        case "LIVE":
-          return "text-red-500";
-        case "UPCOMING":
-          return "text-blue-500";
-        case "FINISHED":
-          return "text-gray-600";
-        default:
-          return "text-gray-600";
-      }
-    };
-    
-    const getStatusBg = (type) => {
-      switch (type) {
-        case "LIVE":
-          return "bg-red-50";
-        case "UPCOMING":
-          return "bg-blue-50";
-        case "FINISHED":
-          return "bg-gray-100";
-        default:
-          return "bg-gray-100";
-      }
-    };
-    
-    // Extract team data with fallbacks - FIXED TO SHOW FULL TEAM NAMES
-    const local = teamInfo(
-      match.localteam ?? 
-      match.localTeam ?? 
-      match.participants?.data?.find(p => p?.is_local) ??
-      {}
-    );
-    const visitor = teamInfo(
-      match.visitorteam ?? 
-      match.visitorTeam ?? 
-      match.participants?.data?.find(p => !p?.is_local) ??
-      {}
-    );
-    
-    const team1Code = local.code || "T1";
-    const team2Code = visitor.code || "T2";
-    const team1Name = local.name;
-    const team2Name = visitor.name;
-    
-    const team1Flag = local.flag || `https://via.placeholder.com/60.png?text=${team1Code}`;
-    const team2Flag = visitor.flag || `https://via.placeholder.com/60.png?text=${team2Code}`;
-    
-    // Format match date and time
-    const matchDate = match.starting_at
-      ? new Date(match.starting_at).toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-        })
-      : "";
-    const matchTime = match.starting_at
-      ? new Date(match.starting_at).toLocaleTimeString("en-US", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        })
-      : "";
-    
-    // Get scores if available - COMPLETELY REWRITTEN TO FIX UNDEFINED ISSUES
-    const getScore = (teamId) => {
-      if (!teamId) return "";
-      
-      // Primary method: check match.runs array
-      if (match.runs) {
-        const scoreData = match.runs.find(run => run.team_id === teamId);
-        if (scoreData) {
-          const score = scoreData.score != null ? scoreData.score : "";
-          const wickets = scoreData.wickets_out != null ? scoreData.wickets_out : "";
-          const overs = scoreData.overs != null ? scoreData.overs : "";
-          
-          if (overs !== "" && overs !== undefined && overs !== null) {
-            return `${score}/${wickets} (${formatOvers(overs)})`;
-          }
-          return `${score}/${wickets}`;
-        }
-      }
-      
-      // Secondary method: check team-specific score objects
-      if (teamId === match.localteam_id && match.localteam_score) {
-        const score = match.localteam_score.score != null ? match.localteam_score.score : "";
-        const wickets = match.localteam_score.wickets != null ? match.localteam_score.wickets : "";
-        const overs = match.localteam_score.overs != null ? match.localteam_score.overs : "";
-        
-        if (overs !== "" && overs !== undefined && overs !== null) {
-          return `${score}/${wickets} (${formatOvers(overs)})`;
-        }
-        return `${score}/${wickets}`;
-      }
-      
-      if (teamId === match.visitorteam_id && match.visitorteam_score) {
-        const score = match.visitorteam_score.score != null ? match.visitorteam_score.score : "";
-        const wickets = match.visitorteam_score.wickets != null ? match.visitorteam_score.wickets : "";
-        const overs = match.visitorteam_score.overs != null ? match.visitorteam_score.overs : "";
-        
-        if (overs !== "" && overs !== undefined && overs !== null) {
-          return `${score}/${wickets} (${formatOvers(overs)})`;
-        }
-        return `${score}/${wickets}`;
-      }
-      
-      // Tertiary method: check alternative data structures
-      if (match.scoreboards) {
-        for (const sb of match.scoreboards) {
-          if (sb.team_id === teamId) {
-            const score = sb.runs != null ? sb.runs : "";
-            const wickets = sb.wickets != null ? sb.wickets : "";
-            const overs = sb.overs != null ? sb.overs : "";
-            
-            if (overs !== "" && overs !== undefined && overs !== null) {
-              return `${score}/${wickets} (${formatOvers(overs)})`;
-            }
-            return `${score}/${wickets}`;
-          }
-        }
-      }
-      
-      // Quaternary method: check alternative naming conventions
-      if (teamId === match.localteam_id && match.localteam_scorecard) {
-        const score = match.localteam_scorecard.runs != null ? match.localteam_scorecard.runs : "";
-        const wickets = match.localteam_scorecard.wickets != null ? match.localteam_scorecard.wickets : "";
-        const overs = match.localteam_scorecard.overs != null ? match.localteam_scorecard.overs : "";
-        
-        if (overs !== "" && overs !== undefined && overs !== null) {
-          return `${score}/${wickets} (${formatOvers(overs)})`;
-        }
-        return `${score}/${wickets}`;
-      }
-      
-      if (teamId === match.visitorteam_id && match.visitorteam_scorecard) {
-        const score = match.visitorteam_scorecard.runs != null ? match.visitorteam_scorecard.runs : "";
-        const wickets = match.visitorteam_scorecard.wickets != null ? match.visitorteam_scorecard.wickets : "";
-        const overs = match.visitorteam_scorecard.overs != null ? match.visitorteam_scorecard.overs : "";
-        
-        if (overs !== "" && overs !== undefined && overs !== null) {
-          return `${score}/${wickets} (${formatOvers(overs)})`;
-        }
-        return `${score}/${wickets}`;
-      }
-      
-      // If no scores found, return empty string
-      return "";
-    };
-    
-    const team1Score = match.localteam_id ? getScore(match.localteam_id) : "";
-    const team2Score = match.visitorteam_id ? getScore(match.visitorteam_id) : "";
-    
+    const localRaw =
+      match.localteam ??
+      match.localTeam ??
+      match.participants?.data?.find((p) => p?.is_local) ??
+      {};
+    const visitorRaw =
+      match.visitorteam ?? match.participants?.data?.find((p) => !p?.is_local) ?? {};
+    const local = teamInfo(localRaw);
+    const visitor = teamInfo(visitorRaw);
+    const leagueName = match.league?.name || match.stage?.name || "Unknown League";
+    const logo = leagueLogo(leagueName);
+    const venue = match.venue?.name || "";
+
+    const localRun =
+      match.localteam_score?.score ??
+      match.runs?.find((r) => r.team_id === match.localteam_id)?.score ??
+      null;
+    const localWk =
+      match.localteam_score?.wickets ??
+      match.runs?.find((r) => r.team_id === match.localteam_id)?.wickets_out ??
+      null;
+    const localOv =
+      match.localteam_score?.overs ??
+      match.runs?.find((r) => r.team_id === match.localteam_id)?.overs ??
+      null;
+
+    const visRun =
+      match.visitorteam_score?.score ??
+      match.runs?.find((r) => r.team_id === match.visitorteam_id)?.score ??
+      null;
+    const visWk =
+      match.visitorteam_score?.wickets ??
+      match.runs?.find((r) => r.team_id === match.visitorteam_id)?.wickets_out ??
+      null;
+    const visOv =
+      match.visitorteam_score?.overs ??
+      match.runs?.find((r) => r.team_id === match.visitorteam_id)?.overs ??
+      null;
+
+    const last = lastBallEvent(match.balls?.data ?? match.balls ?? []);
+
     return (
-      <Link 
-        to={`/match/${match.id}`} 
-        className="block"
+      <Link
+        to={`/match/${match.id}`}
+        className="block rounded-2xl border border-gray-200 bg-white hover:shadow-md transition no-underline"
       >
-        <div className="bg-white rounded-xl shadow-lg p-3 sm:p-4 w-full font-open-sans break-words hover:shadow-xl transition-shadow duration-200">
-          {/* Header */}
-          <div className="flex items-center gap-2 mb-2">
-            <span
-              className={`px-2 py-1 rounded text-xs font-bold uppercase ${getStatusColor(
-                matchType
-              )} ${getStatusBg(matchType)} leading-tight`}
-            >
-              {matchType}
-            </span>
-            <span className="text-xs text-gray-600">●</span>
-            <span className="text-xs text-gray-600 font-medium flex-1 leading-tight truncate">
-              {match.league?.name || match.stage?.name || "Cricket Match"}
-            </span>
-          </div>
-          
-          {/* Match Details */}
-          <div className="mb-2">
-            <div className="flex items-center gap-1 text-xs text-gray-600 mb-1 flex-wrap">
-              <span className="font-medium leading-tight truncate max-w-[70%]">
-                {match.round || match.stage?.name || "Match"}
-              </span>
-              <span className="text-red-500 text-xs">📍</span>
-              <span className="leading-tight truncate">{match.venue?.name || "TBD"}</span>
-            </div>
-          </div>
-          
-          {/* Teams */}
-          <div className="space-y-2 mb-3">
-            {/* Team 1 */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                <img
-                  src={team1Flag}
-                  alt={team1Name}
-                  className="w-6 h-6 sm:w-7 sm:h-7 rounded-full object-cover flex-shrink-0"
-                  onError={(e) => {
-                    e.currentTarget.src = `https://via.placeholder.com/60.png?text=${team1Code}`;
-                  }}
-                />
-                <span className="font-bold text-gray-800 text-sm sm:text-base leading-tight truncate min-w-0">
-                  {team1Name}
-                </span>
-              </div>
-              {team1Score && (
-                <span className="text-sm font-mono text-gray-700 whitespace-nowrap ml-2 flex-shrink-0">
-                  {team1Score}
-                </span>
-              )}
-            </div>
-            
-            {/* Team 2 */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                <img
-                  src={team2Flag}
-                  alt={team2Name}
-                  className="w-6 h-6 sm:w-7 sm:h-7 rounded-full object-cover flex-shrink-0"
-                  onError={(e) => {
-                    e.currentTarget.src = `https://via.placeholder.com/60.png?text=${team2Code}`;
-                  }}
-                />
-                <span className="font-bold text-gray-800 text-sm sm:text-base leading-tight truncate min-w-0">
-                  {team2Name}
-                </span>
-              </div>
-              {team2Score ? (
-                <span className="text-sm font-mono text-gray-700 whitespace-nowrap ml-2 flex-shrink-0">
-                  {team2Score}
-                </span>
-              ) : matchType === "UPCOMING" && (
-                <span className="text-xs text-gray-500 italic whitespace-nowrap flex-shrink-0">Yet to bat</span>
-              )}
-            </div>
-            
-            {/* Upcoming Match Time */}
-            {matchType === "UPCOMING" && matchDate && matchTime && (
-              <div className="flex justify-end pt-1 mt-1 border-t border-gray-100">
-                <div className="text-right leading-tight">
-                  <div className="text-xs sm:text-sm text-gray-800 font-medium">{matchDate}</div>
-                  <div className="text-sm sm:text-base font-bold text-gray-800">{matchTime}</div>
+        <div className="p-4 sm:p-5">
+          {/* top row */}
+          <div className="flex items-start gap-3 sm:gap-4">
+            <img
+              src={logo}
+              alt={leagueName}
+              className="w-8 h-8 sm:w-9 sm:h-9 rounded hidden sm:block shrink-0"
+              onError={(e) => (e.currentTarget.src = leagueLogo(null))}
+            />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-[11px] sm:text-xs text-gray-500 truncate">{leagueName}</div>
+
+                  <div className="mt-1 grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-3">
+                    {/* local */}
+                    <div className="flex items-center gap-2 min-w-0">
+                      {local.flag ? (
+                        <img
+                          src={local.flag}
+                          alt={local.name}
+                          className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border shrink-0 object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                          }}
+                        />
+                      ) : (
+                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-200 flex items-center justify-center text-[10px] sm:text-xs font-semibold text-gray-700 shrink-0">
+                          {local.name
+                            ? local.name
+                                .trim()
+                                .split(" ")
+                                .map((s) => s[0])
+                                .slice(0, 2)
+                                .join("")
+                            : "T"}
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <div className="font-semibold text-gray-900 truncate text-sm sm:text-base">
+                          {local.name}
+                        </div>
+                        <div className="text-[11px] text-gray-500">RR {rr(localRun, localOv)}</div>
+                      </div>
+                    </div>
+
+                    <div className="text-gray-400 font-medium text-xs sm:text-sm px-1 text-center">
+                      vs
+                    </div>
+
+                    {/* visitor */}
+                    <div className="flex items-center gap-2 min-w-0 justify-end">
+                      <div className="min-w-0 text-right">
+                        <div className="font-semibold text-gray-900 truncate text-sm sm:text-base">
+                          {visitor.name}
+                        </div>
+                        <div className="text-[11px] text-gray-500">RR {rr(visRun, visOv)}</div>
+                      </div>
+                      {visitor.flag ? (
+                        <img
+                          src={visitor.flag}
+                          alt={visitor.name}
+                          className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border shrink-0 object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                          }}
+                        />
+                      ) : (
+                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-200 flex items-center justify-center text-[10px] sm:text-xs font-semibold text-gray-700 shrink-0">
+                          {visitor.name
+                            ? visitor.name
+                                .trim()
+                                .split(" ")
+                                .map((s) => s[0])
+                                .slice(0, 2)
+                                .join("")
+                            : "V"}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="text-right shrink-0 pl-2 border-l border-gray-200">
+                  <div className="text-[11px] sm:text-xs text-gray-500 break-words">
+                    {match.type || ""}
+                  </div>
+                  <div className="text-lg sm:text-xl font-bold leading-tight">
+                    {formatScore(localRun, localWk, localOv)}
+                  </div>
+                  <div className="text-sm sm:text-base text-gray-700 leading-tight">
+                    {formatScore(visRun, visWk, visOv)}
+                  </div>
                 </div>
               </div>
-            )}
-          </div>
-          
-          {/* Result/Status */}
-          <div className="text-center py-2 bg-gray-50 rounded-lg mb-3 leading-tight">
-            <span className="text-xs sm:text-sm text-gray-600 font-medium truncate block">
-              {match.note || match.status || "Match Details"}
-            </span>
-          </div>
-          
-          {/* Action Buttons */}
-          <div className="flex gap-1 sm:gap-2 text-xs">
-            <Link
-              to="/fixtures-results?action=schedule"
-              className="flex-1 py-1 text-gray-600 hover:text-gray-800 font-medium leading-tight hover:underline text-center"
-            >
-              Schedule
-            </Link>
-            <Link
-              to="/fixtures-results?action=report"
-              className="flex-1 py-1 text-gray-600 hover:text-gray-800 font-medium leading-tight hover:underline text-center"
-            >
-              Report
-            </Link>
-            <Link
-              to="/fixtures-results?action=series"
-              className="flex-1 py-1 text-gray-600 hover:text-gray-800 font-medium leading-tight hover:underline text-center"
-            >
-              Series
-            </Link>
+
+              {/* divider row */}
+              <div className="mt-3 pt-3 border-t border-dashed border-gray-200 flex items-center justify-between text-[12px] sm:text-xs text-gray-600">
+                <div className="flex items-center gap-2 min-w-0">
+                  <svg className="w-4 h-4 text-gray-400 shrink-0" viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M12 2l4 7h-8l4-7zM2 21h20"
+                      stroke="currentColor"
+                      strokeWidth="1.2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  <span className="truncate">{venue}</span>
+                </div>
+                <div className="text-right min-w-[96px]">
+                  {match.note ? (
+                    <span className="text-orange-600 font-medium break-words">{match.note}</span>
+                  ) : (
+                    <span className="text-gray-500 break-words">{match.status || ""}</span>
+                  )}
+                </div>
+              </div>
+
+              {last && (
+                <div className="mt-3 text-[13px] sm:text-sm rounded-md bg-blue-50 px-3 py-2 text-blue-900 break-words">
+                  <strong className="mr-1.5">Last ball:</strong> {last.text}
+                  {last.over ? <span> (Over {last.over})</span> : null}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </Link>
     );
   };
-  
+
   const SeriesBlock = ({ title, list = [] }) => {
     const safe = (list || []).filter(Boolean);
     if (safe.length === 0) return null;
@@ -757,7 +676,7 @@ export default function LiveScorePage() {
             See all
           </Link>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-5">
           {safe.map((m) => (
             <MatchCard key={m.id || Math.random()} match={m} />
           ))}
@@ -765,9 +684,11 @@ export default function LiveScorePage() {
       </section>
     );
   };
+
   // Sidebar
   const Sidebar = () => {
     const showPlayers = playersToShow && playersToShow.length > 0;
+
     return (
       <aside className="hidden lg:block lg:w-80 xl:w-96">
         <div className="sticky top-20 space-y-4">
@@ -810,6 +731,7 @@ export default function LiveScorePage() {
               </ul>
             )}
           </div>
+
           <div className="rounded-2xl border border-gray-200 bg-white p-4">
             <h4 className="font-semibold mb-2">Trending News</h4>
             {trendingNews && trendingNews.length > 0 ? (
@@ -861,6 +783,7 @@ export default function LiveScorePage() {
               </div>
             )}
           </div>
+
           <div className="rounded-2xl border border-gray-200 bg-white p-4">
             <h4 className="font-semibold mb-2">Trending Venues</h4>
             {trendingVenues.length === 0 ? (
@@ -889,6 +812,7 @@ export default function LiveScorePage() {
       </aside>
     );
   };
+
   const SkeletonList = ({ count = 3 }) => (
     <div className="space-y-4 animate-pulse">
       {Array.from({ length: count }).map((_, i) => (
@@ -896,10 +820,11 @@ export default function LiveScorePage() {
       ))}
     </div>
   );
+
   /* ================== RENDER ================== */
   return (
     <div className="max-w-[1200px] mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6">
-      {/* Navigation Breadcrumb */}
+  {/* Navigation Breadcrumb */}
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 py-3">
           <nav className="flex items-center gap-2 text-sm text-gray-600">
@@ -913,14 +838,17 @@ export default function LiveScorePage() {
         <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold">Cricket Match Center</h1>
         <p className="text-gray-600 mt-1 text-sm sm:text-base">Live scores, schedules and results.</p>
       </header>
+
       <Tabs />
       {(activeTab === "results" || activeTab === "schedule") && <DayBar />}
+
       <div className="mt-4 sm:mt-6 grid lg:grid-cols-[1fr_320px] gap-4 sm:gap-6">
         <main className="min-w-0">
           {errorMsg && (
             <div className="rounded p-3 bg-yellow-50 text-yellow-700 mb-4">{errorMsg}</div>
           )}
           {loading && <SkeletonList count={4} />}
+
           {!loading && activeTab === "live" && (
             <>
               <h2 className="text-lg sm:text-xl font-bold mb-3">Top live matches</h2>
@@ -947,7 +875,7 @@ export default function LiveScorePage() {
                             See all
                           </Link>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                           {applyChipFilters(g.list).map((m) => (
                             <MatchCard key={m.id} match={m} />
                           ))}
@@ -963,6 +891,7 @@ export default function LiveScorePage() {
               )}
             </>
           )}
+
           {!loading && activeTab === "results" && (
             <>
               <h2 className="text-lg sm:text-xl font-bold mb-3">Match Results</h2>
@@ -977,6 +906,7 @@ export default function LiveScorePage() {
               )}
             </>
           )}
+
           {!loading && activeTab === "schedule" && (
             <>
               <h2 className="text-lg sm:text-xl font-bold mb-3">Upcoming Fixtures</h2>
@@ -992,6 +922,7 @@ export default function LiveScorePage() {
             </>
           )}
         </main>
+
         <Sidebar />
       </div>
     </div>
